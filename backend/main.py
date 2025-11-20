@@ -133,8 +133,16 @@ def root():
 @app.get("/api/user/profile")
 async def check_profile(uuid: str):
     """Check if user profile exists."""
+    from backend.logic.storage import get_user_dir
+    from pathlib import Path
+    import json
+    
     profile = load_user_profile(uuid)
     if profile:
+        # Try to get the original profile text if stored
+        user_dir = get_user_dir(uuid)
+        profile_text = ""
+        # We don't store the original text, so we'll just return that profile exists
         return {
             "exists": True,
             "profile": profile

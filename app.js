@@ -59,9 +59,12 @@ async function checkProfileExists() {
             const data = await response.json();
             if (data.exists) {
                 userProfileData = data.profile;
-                // Try to get profile text from stored data or fetch it
-                // For now, we'll just mark it as existing
-                userFirstName = extractFirstName(userProfileText || '');
+                // Extract first name from profile data if available
+                if (data.profile && data.profile.work_history && data.profile.work_history.length > 0) {
+                    // Try to get name from profile structure
+                    const profileStr = JSON.stringify(data.profile);
+                    userFirstName = extractFirstName(profileStr);
+                }
                 updateProfileUI(true);
                 return true;
             }
