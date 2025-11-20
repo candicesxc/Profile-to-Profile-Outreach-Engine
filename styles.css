@@ -265,24 +265,25 @@ button {
 }
 
 .message-card {
-    position: relative;
     margin-bottom: 16px;
 }
 
+.message-card textarea {
+    margin-bottom: 8px;
+}
+
 .copy-btn {
-    position: absolute;
-    top: 8px;
-    right: 8px;
-    padding: 6px 12px;
+    padding: 8px 16px;
     background: #0a66c2;
     color: white;
     border: none;
     border-radius: 16px;
-    font-size: 12px;
+    font-size: 14px;
     font-weight: 600;
     cursor: pointer;
     transition: all 0.2s;
-    z-index: 10;
+    display: inline-block;
+    margin-top: 8px;
 }
 
 .copy-btn:hover {

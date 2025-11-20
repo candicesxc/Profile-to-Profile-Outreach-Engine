@@ -19,6 +19,18 @@
 
         <!-- Page 1: Save My Profile -->
         <div id="profile-page" class="page active">
+            <!-- Global Instructions (shown on first visit) -->
+            <div id="global-instructions-profile" class="hero-section" style="display: none;">
+                <h2>Generate Personalized LinkedIn Outreach</h2>
+                <p>Create tailored connection requests, emails, and follow-ups based on profile overlap and context.</p>
+                <ol class="hero-steps">
+                    <li>Save your own LinkedIn profile under "My Profile"</li>
+                    <li>Paste the other person's LinkedIn profile below</li>
+                    <li>Click "Generate Outreach" to create personalized messages</li>
+                </ol>
+                <button class="btn-primary" onclick="showPage('outreach')" style="margin-top: 16px;">Go to Generate Outreach</button>
+            </div>
+            
             <div class="card">
                 <h2>My Profile</h2>
                 <p class="helper-text">Save your LinkedIn profile to personalize outreach messages.</p>
@@ -35,6 +47,12 @@
                     <p class="helper-text" id="profile-helper">This will be used to personalize your outreach messages.</p>
                 </div>
                 
+                <div class="progress-bar-container" id="profile-progress-container">
+                    <div class="progress-bar">
+                        <div class="progress-bar-fill" id="profile-progress-bar"></div>
+                    </div>
+                </div>
+                
                 <button class="btn-primary" id="profile-save-btn" onclick="saveProfile()">Save Profile</button>
                 <div id="profile-message" class="message"></div>
             </div>
@@ -42,6 +60,7 @@
 
         <!-- Page 2: Outreach Generator -->
         <div id="outreach-page" class="page">
+            <!-- Global Instructions (always visible) -->
             <div class="hero-section">
                 <h2>Generate Personalized LinkedIn Outreach</h2>
                 <p>Create tailored connection requests, emails, and follow-ups based on profile overlap and context.</p>
@@ -50,6 +69,13 @@
                     <li>Paste the other person's LinkedIn profile below</li>
                     <li>Click "Generate Outreach" to create personalized messages</li>
                 </ol>
+            </div>
+            
+            <!-- Warning if profile missing -->
+            <div id="profile-missing-warning" class="card" style="display: none; background: #fff3cd; border-color: #ffc107;">
+                <p style="color: #856404; margin: 0; font-weight: 500;">
+                    ⚠️ You have not saved your profile yet. Please complete "My Profile" so we can personalize your outreach.
+                </p>
             </div>
             
             <div class="card">
@@ -83,8 +109,8 @@
                     <h3>LinkedIn Connection Request</h3>
                     <div class="char-count" id="linkedin-count"></div>
                     <div class="message-card">
-                        <button class="copy-btn" onclick="copyMessage('linkedin-result', this)">Copy</button>
                         <textarea id="linkedin-result" readonly></textarea>
+                        <button class="copy-btn" onclick="copyMessage('linkedin-result', this)">Copy</button>
                     </div>
                     <button class="btn-secondary" onclick="refineMessage('linkedin')">Refine</button>
                 </div>
@@ -93,8 +119,8 @@
                     <h3>Cold Outreach Email</h3>
                     <div class="char-count" id="email-count"></div>
                     <div class="message-card">
-                        <button class="copy-btn" onclick="copyMessage('email-result', this)">Copy</button>
                         <textarea id="email-result" readonly></textarea>
+                        <button class="copy-btn" onclick="copyMessage('email-result', this)">Copy</button>
                     </div>
                     <button class="btn-secondary" onclick="refineMessage('email')">Refine</button>
                 </div>
@@ -103,8 +129,8 @@
                     <h3>Follow-Up Template</h3>
                     <div class="char-count" id="followup-count"></div>
                     <div class="message-card">
-                        <button class="copy-btn" onclick="copyMessage('followup-result', this)">Copy</button>
                         <textarea id="followup-result" readonly></textarea>
+                        <button class="copy-btn" onclick="copyMessage('followup-result', this)">Copy</button>
                     </div>
                     <button class="btn-secondary" onclick="refineMessage('followup')">Refine</button>
                 </div>

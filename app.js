@@ -38,12 +38,15 @@ function showPage(pageName) {
     document.querySelectorAll('.nav-btn').forEach(btn => {
         btn.classList.remove('active');
     });
-    document.querySelector(`.nav-btn[data-page="${pageName}"]`).classList.add('active');
+    const navBtn = document.querySelector(`.nav-btn[data-page="${pageName}"]`);
+    if (navBtn) navBtn.classList.add('active');
     
     if (pageName === 'history') {
         loadHistory();
     } else if (pageName === 'profile') {
         checkProfileExists();
+    } else if (pageName === 'outreach') {
+        checkProfileWarning();
     }
 }
 
@@ -95,22 +98,26 @@ function updateProfileUI(profileExists) {
     }
 }
 
-// Extract first name from profile text
+// Centralized name extraction helper
 function extractFirstName(profileText) {
-    if (!profileText) return null;
+    if (!profileText || typeof profileText !== 'string') return null;
     
     // Try to find name in common patterns
     const lines = profileText.split('\n').filter(line => line.trim());
     
-    // Pattern 1: First line that looks like a name (2-3 words, capitalized)
+    // Pattern 1: First line that looks like a name (1-3 words, capitalized)
     for (const line of lines.slice(0, 5)) {
         const trimmed = line.trim();
+        // Skip lines that are clearly not names
+        if (trimmed.length > 50 || trimmed.includes('@') || trimmed.includes('http')) {
+            continue;
+        }
         const words = trimmed.split(/\s+/);
         if (words.length >= 1 && words.length <= 3) {
             const firstWord = words[0];
-            // Check if it looks like a name (starts with capital, reasonable length)
+            // Check if it looks like a name (starts with capital, reasonable length, no special chars)
             if (firstWord.length >= 2 && firstWord.length <= 20 && 
-                /^[A-Z][a-z]+$/.test(firstWord)) {
+                /^[A-Z][a-z]+$/.test(firstWord) && !firstWord.includes('.')) {
                 return firstWord;
             }
         }
@@ -118,13 +125,52 @@ function extractFirstName(profileText) {
     
     // Pattern 2: Look for "Name:" or similar patterns
     for (const line of lines) {
-        const match = line.match(/(?:name|Name|NAME)[:\s]+([A-Z][a-z]+)/i);
-        if (match) {
+        const match = line.match(/(?:name|Name|NAME|Full Name|Full name)[:\s]+([A-Z][a-z]+)/i);
+        if (match && match[1]) {
+            return match[1];
+        }
+    }
+    
+    // Pattern 3: Look for LinkedIn-style header (first capitalized word after common prefixes)
+    for (const line of lines.slice(0, 3)) {
+        const match = line.match(/^(?:Mr\.|Ms\.|Mrs\.|Dr\.)?\s*([A-Z][a-z]+)/);
+        if (match && match[1]) {
             return match[1];
         }
     }
     
     return null;
+}
+
+// Progress bar for profile save
+function startProfileProgress() {
+    const progressContainer = document.getElementById('profile-progress-container');
+    const progressBar = document.getElementById('profile-progress-bar');
+    progressContainer.classList.add('active');
+    progressBar.style.width = '10%';
+    
+    let progress = 10;
+    const interval = setInterval(() => {
+        progress += Math.random() * 15;
+        if (progress > 90) progress = 90;
+        progressBar.style.width = progress + '%';
+    }, 300);
+    
+    return interval;
+}
+
+function completeProfileProgress(interval) {
+    if (interval) {
+        clearInterval(interval);
+    }
+    const progressBar = document.getElementById('profile-progress-bar');
+    progressBar.style.width = '100%';
+    
+    setTimeout(() => {
+        const progressContainer = document.getElementById('profile-progress-container');
+        progressContainer.classList.remove('active');
+        progressBar.style.width = '0%';
+    }, 500);
 }
 
 // Save profile
@@ -136,6 +182,9 @@ async function saveProfile() {
         showMessage(messageDiv, 'Please enter your profile text', 'error');
         return;
     }
+    
+    // Start progress bar
+    const progressInterval = startProfileProgress();
     
     try {
         const response = await fetch(`${API_BASE}/api/user/profile`, {
@@ -154,15 +203,20 @@ async function saveProfile() {
         if (data.success) {
             userProfileData = { profile_text: profileText };
             userProfileText = profileText;
+            // Extract user's first name from saved profile
             userFirstName = extractFirstName(profileText);
             updateProfileUI(true);
             showMessage(messageDiv, 'Profile saved successfully!', 'success');
+            // Mark first visit as complete
+            localStorage.setItem('pto_firstVisit', 'false');
             // Don't clear the textarea - let user see what they saved
         } else {
             showMessage(messageDiv, data.message || 'Failed to save profile', 'error');
         }
     } catch (error) {
         showMessage(messageDiv, `Error: ${error.message}`, 'error');
+    } finally {
+        completeProfileProgress(progressInterval);
     }
 }
 
@@ -203,15 +257,38 @@ function completeProgress() {
     }, 500);
 }
 
-// Replace placeholders with actual names
+// Centralized placeholder replacement helper
 function replaceNamePlaceholders(text, targetName, userName) {
-    if (!text) return text;
+    if (!text || typeof text !== 'string') return text;
     
-    // Replace common placeholders
-    text = text.replace(/\[Name\]/gi, targetName || '[Name]');
-    text = text.replace(/\[Your Name\]/gi, userName || '[Your Name]');
-    text = text.replace(/\[FIRST_NAME\]/gi, targetName || '[FIRST_NAME]');
-    text = text.replace(/\[MY_NAME\]/gi, userName || '[MY_NAME]');
+    // Replace target contact name placeholders
+    if (targetName) {
+        text = text.replace(/\[Name\]/gi, targetName);
+        text = text.replace(/\[FIRST_NAME\]/gi, targetName);
+        text = text.replace(/\[CONTACT_NAME\]/gi, targetName);
+    } else {
+        // Fallback to friendly greeting instead of placeholder
+        text = text.replace(/\[Name\]/gi, 'Hi');
+        text = text.replace(/\[FIRST_NAME\]/gi, 'Hi');
+        text = text.replace(/\[CONTACT_NAME\]/gi, 'Hi');
+        // Also handle "Hi [Name]" patterns
+        text = text.replace(/Hi\s+\[Name\]/gi, 'Hi there');
+        text = text.replace(/Hi\s+\[FIRST_NAME\]/gi, 'Hi there');
+    }
+    
+    // Replace user's own name placeholders
+    if (userName) {
+        text = text.replace(/\[Your Name\]/gi, userName);
+        text = text.replace(/\[MY_NAME\]/gi, userName);
+        text = text.replace(/\[YOUR_NAME\]/gi, userName);
+    } else {
+        // Remove placeholder but keep the sentence structure
+        text = text.replace(/\[Your Name\]/gi, '');
+        text = text.replace(/\[MY_NAME\]/gi, '');
+        text = text.replace(/\[YOUR_NAME\]/gi, '');
+        // Clean up any double spaces
+        text = text.replace(/\s+/g, ' ').trim();
+    }
     
     return text;
 }
@@ -251,7 +328,7 @@ async function generateOutreach() {
         if (data.success) {
             currentHistoryId = data.history_id;
             
-            // Replace name placeholders
+            // Replace name placeholders BEFORE saving or displaying
             const linkedinMsg = replaceNamePlaceholders(
                 data.linkedin_connection_request, 
                 targetFirstName, 
@@ -274,10 +351,12 @@ async function generateOutreach() {
                 followup: followupMsg
             };
             
-            // Display results
+            // Display results (already processed, no placeholders)
             document.getElementById('linkedin-result').value = linkedinMsg;
             document.getElementById('email-result').value = emailMsg;
             document.getElementById('followup-result').value = followupMsg;
+            
+            // Note: History will store these processed messages, so no placeholders will appear there
             
             updateCharCounts();
             document.getElementById('outreach-results').style.display = 'block';
@@ -427,7 +506,7 @@ async function applyRefinement() {
                 'followup': 'followup-result'
             };
             
-            // Replace name placeholders in refined message
+            // Replace name placeholders in refined message BEFORE displaying
             const refinedWithNames = replaceNamePlaceholders(
                 data.refined_message,
                 targetFirstName,
@@ -438,7 +517,7 @@ async function applyRefinement() {
             updateCharCounts();
             showMessage(messageDiv, 'Message refined successfully!', 'success');
             
-            // Update current messages
+            // Update current messages (already processed, no placeholders)
             currentMessages[currentRefinementType] = refinedWithNames;
         } else {
             showMessage(messageDiv, 'Failed to refine message', 'error');
@@ -490,27 +569,43 @@ async function viewHistoryEntry(historyId) {
             const entry = data.entry;
             const detailDiv = document.createElement('div');
             detailDiv.className = 'history-detail card';
+            
+            // Escape text for HTML but preserve newlines
+            const escapeHtml = (text) => {
+                if (!text) return '';
+                return text.replace(/&/g, '&amp;')
+                          .replace(/</g, '&lt;')
+                          .replace(/>/g, '&gt;')
+                          .replace(/"/g, '&quot;')
+                          .replace(/'/g, '&#039;');
+            };
+            
+            const linkedinText = escapeHtml(entry.linkedin_connection_request || '');
+            const emailText = escapeHtml(entry.cold_outreach_email || '');
+            const followupText = escapeHtml(entry.followup_template || '');
+            const followupMsgText = entry.followup_message ? escapeHtml(entry.followup_message) : '';
+            
             detailDiv.innerHTML = `
                 <h4>LinkedIn Connection Request</h4>
                 <div class="message-card">
-                    <button class="copy-btn" onclick="copyMessageFromText('${(entry.linkedin_connection_request || '').replace(/'/g, "\\'")}', this)">Copy</button>
-                    <textarea readonly>${entry.linkedin_connection_request || ''}</textarea>
+                    <textarea readonly>${linkedinText}</textarea>
+                    <button class="copy-btn" onclick="copyMessageFromText('${(entry.linkedin_connection_request || '').replace(/'/g, "\\'").replace(/\n/g, '\\n')}', this)">Copy</button>
                 </div>
                 <h4>Cold Outreach Email</h4>
                 <div class="message-card">
-                    <button class="copy-btn" onclick="copyMessageFromText('${(entry.cold_outreach_email || '').replace(/'/g, "\\'")}', this)">Copy</button>
-                    <textarea readonly>${entry.cold_outreach_email || ''}</textarea>
+                    <textarea readonly>${emailText}</textarea>
+                    <button class="copy-btn" onclick="copyMessageFromText('${(entry.cold_outreach_email || '').replace(/'/g, "\\'").replace(/\n/g, '\\n')}', this)">Copy</button>
                 </div>
                 <h4>Follow-Up Template</h4>
                 <div class="message-card">
-                    <button class="copy-btn" onclick="copyMessageFromText('${(entry.followup_template || '').replace(/'/g, "\\'")}', this)">Copy</button>
-                    <textarea readonly>${entry.followup_template || ''}</textarea>
+                    <textarea readonly>${followupText}</textarea>
+                    <button class="copy-btn" onclick="copyMessageFromText('${(entry.followup_template || '').replace(/'/g, "\\'").replace(/\n/g, '\\n')}', this)">Copy</button>
                 </div>
                 ${entry.followup_message ? `
                 <h4>Follow-Up Message</h4>
                 <div class="message-card">
-                    <button class="copy-btn" onclick="copyMessageFromText('${entry.followup_message.replace(/'/g, "\\'")}', this)">Copy</button>
-                    <textarea readonly>${entry.followup_message}</textarea>
+                    <textarea readonly>${followupMsgText}</textarea>
+                    <button class="copy-btn" onclick="copyMessageFromText('${entry.followup_message.replace(/'/g, "\\'").replace(/\n/g, '\\n')}', this)">Copy</button>
                 </div>
                 ` : ''}
             `;
