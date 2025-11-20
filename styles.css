@@ -434,32 +434,37 @@ button {
 
 .history-item {
     padding: 20px;
-    margin-bottom: 15px;
-    background: #f8f9fa;
+    margin-bottom: 16px;
+    background: #ffffff;
     border-radius: 8px;
-    border-left: 4px solid #667eea;
+    border: 1px solid #e0e0e0;
+    box-shadow: 0 0 0 1px rgba(0,0,0,.04), 0 2px 4px rgba(0,0,0,.06);
 }
 
-.history-item h4 {
-    color: #333;
-    margin-bottom: 10px;
+.history-title {
+    color: #0a66c2;
+    margin-bottom: 6px;
+    font-size: 18px;
+    font-weight: 700;
 }
 
 .history-subtext {
     font-size: 13px;
     color: #666666;
-    margin: 2px 0 10px;
+    margin: 0 0 12px;
 }
 
 .history-item .meta {
-    font-size: 12px;
-    color: #666;
-    margin-bottom: 10px;
+    font-size: 13px;
+    color: #4a4a4a;
+    margin-bottom: 12px;
 }
 
 .preview-text {
-    display: inline-block;
-    margin-left: 8px;
+    display: block;
+    margin-top: 6px;
+    color: #666666;
+    line-height: 1.4;
 }
 
 .history-item .status {
@@ -482,21 +487,21 @@ button {
 }
 
 .history-item button {
-    margin-top: 10px;
+    margin-top: 8px;
     margin-right: 10px;
 }
 
 .history-detail {
-    margin-top: 20px;
+    margin-top: 16px;
     padding: 20px;
-    background: white;
+    background: #f9fafb;
     border-radius: 8px;
     border: 1px solid #e0e0e0;
 }
 
 .history-detail h4 {
-    margin-bottom: 15px;
-    color: #333;
+    margin-bottom: 12px;
+    color: #000000e6;
 }
 
 .history-detail textarea {

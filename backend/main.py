@@ -4,6 +4,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 from typing import Optional
 import os
+import re
 from dotenv import load_dotenv
 
 try:
@@ -76,6 +77,61 @@ except Exception as e:
 message_draft_agent = MessageDraftAgent()
 refinement_agent = RefinementAgent()
 followup_agent = FollowUpAgent()
+
+
+def _extract_first_name(profile_text: str) -> str | None:
+    """Lightweight heuristic to capture a contact's first name from profile text."""
+    if not profile_text:
+        return None
+
+    lines = [line.strip() for line in profile_text.split("\n") if line.strip()]
+    for line in lines[:5]:
+        if any(term in line.lower() for term in ["@", "http", "linkedin", "|"]):
+            continue
+        words = line.split()
+        if 1 <= len(words) <= 3 and words[0][0:1].isupper():
+            return words[0]
+    return None
+
+
+def _extract_company(target_profile: dict, profile_text: str) -> str | None:
+    """Pull a likely company name from structured profile data or raw text."""
+    if target_profile:
+        company = target_profile.get("current_company")
+        if company:
+            return company
+
+        work_history = target_profile.get("work_history") or []
+        if work_history and isinstance(work_history, list):
+            top_company = work_history[0].get("company") or work_history[0].get("organization")
+            if top_company:
+                return top_company
+
+    if profile_text:
+        match = re.search(r"\b(?:at|@)\s+([A-Z][A-Za-z0-9&.,'\- ]{2,})", profile_text)
+        if match:
+            return match.group(1).strip()
+
+    return None
+
+
+def _derive_contact_details(target_profile: dict, profile_text: str) -> dict:
+    """Return a small bundle of contact metadata for consistent history titles."""
+    name = None
+    if target_profile:
+        name = (
+            target_profile.get("full_name")
+            or target_profile.get("name")
+            or target_profile.get("first_name")
+            or target_profile.get("firstName")
+        )
+
+    if not name:
+        name = _extract_first_name(profile_text)
+
+    company = _extract_company(target_profile or {}, profile_text)
+
+    return {"contact_name": name, "contact_company": company}
 
 
 # Request/Response models
@@ -221,6 +277,7 @@ async def generate_outreach(request: OutreachRequest):
         )
         
         # Save to history
+        contact_meta = _derive_contact_details(target_profile, target_profile_text)
         history_entry = {
             "target_profile_text": target_profile_text[:500],  # Store truncated version
             "target_profile": target_profile,
@@ -231,7 +288,8 @@ async def generate_outreach(request: OutreachRequest):
             "linkedin_connection_request": messages["linkedin_connection_request"],
             "cold_outreach_email": messages["cold_outreach_email"],
             "followup_template": messages["followup_template"],
-            "status": "draft"
+            "status": "draft",
+            **contact_meta,
         }
         
         history_id = save_history_entry(request.uuid, history_entry)
@@ -335,7 +393,15 @@ async def get_history(uuid: str):
                     "id": h.get("id"),
                     "timestamp": h.get("timestamp"),
                     "status": h.get("status", "draft"),
-                    "target_preview": h.get("target_profile_text", "")[:100]
+                    "target_preview": h.get("target_profile_text", "")[:100],
+                    "contact_name": h.get("contact_name") or _derive_contact_details(
+                        h.get("target_profile", {}),
+                        h.get("target_profile_text", "")
+                    ).get("contact_name"),
+                    "contact_company": h.get("contact_company") or _derive_contact_details(
+                        h.get("target_profile", {}),
+                        h.get("target_profile_text", "")
+                    ).get("contact_company"),
                 }
                 for h in history
             ]
@@ -352,6 +418,13 @@ async def get_history_entry(uuid: str, history_id: str):
         
         for entry in history:
             if entry.get("id") == history_id:
+                # Populate contact metadata for older entries that may not have it yet
+                contact_meta = _derive_contact_details(
+                    entry.get("target_profile", {}),
+                    entry.get("target_profile_text", "")
+                )
+                entry.setdefault("contact_name", contact_meta.get("contact_name"))
+                entry.setdefault("contact_company", contact_meta.get("contact_company"))
                 return {
                     "success": True,
                     "entry": entry
