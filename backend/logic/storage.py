@@ -8,7 +8,14 @@ import uuid as uuid_lib
 
 def get_user_dir(uuid: str) -> Path:
     """Get the user data directory for a given UUID."""
-    base_dir = Path(__file__).parent.parent / "data" / "users" / uuid
+    # Try to find the backend directory
+    current_file = Path(__file__)
+    # If we're in backend/logic/, go up two levels
+    if current_file.parts[-2] == "logic":
+        base_dir = current_file.parent.parent / "data" / "users" / uuid
+    else:
+        # Fallback: use current directory
+        base_dir = Path("backend/data/users") / uuid
     base_dir.mkdir(parents=True, exist_ok=True)
     return base_dir
 

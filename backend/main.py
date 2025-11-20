@@ -6,23 +6,44 @@ from typing import Optional
 import os
 from dotenv import load_dotenv
 
-from backend.agents.extractor_agent import ExtractorAgent
-from backend.agents.overlap_agent import OverlapAgent
-from backend.agents.search_agent import SearchAgent
-from backend.agents.message_draft_agent import MessageDraftAgent
-from backend.agents.refinement_agent import RefinementAgent
-from backend.agents.followup_agent import FollowUpAgent
-from backend.logic.sanitizer import sanitize_input
-from backend.logic.storage import (
-    save_user_profile,
-    load_user_profile,
-    load_user_embedding,
-    save_history_entry,
-    load_history,
-    update_history_entry
-)
-from backend.logic.context_parser import parse_context_note
-from backend.logic.embeddings import generate_embedding
+try:
+    # Try absolute imports (for local development)
+    from backend.agents.extractor_agent import ExtractorAgent
+    from backend.agents.overlap_agent import OverlapAgent
+    from backend.agents.search_agent import SearchAgent
+    from backend.agents.message_draft_agent import MessageDraftAgent
+    from backend.agents.refinement_agent import RefinementAgent
+    from backend.agents.followup_agent import FollowUpAgent
+    from backend.logic.sanitizer import sanitize_input
+    from backend.logic.storage import (
+        save_user_profile,
+        load_user_profile,
+        load_user_embedding,
+        save_history_entry,
+        load_history,
+        update_history_entry
+    )
+    from backend.logic.context_parser import parse_context_note
+    from backend.logic.embeddings import generate_embedding
+except ImportError:
+    # Fall back to relative imports (for Render deployment)
+    from agents.extractor_agent import ExtractorAgent
+    from agents.overlap_agent import OverlapAgent
+    from agents.search_agent import SearchAgent
+    from agents.message_draft_agent import MessageDraftAgent
+    from agents.refinement_agent import RefinementAgent
+    from agents.followup_agent import FollowUpAgent
+    from logic.sanitizer import sanitize_input
+    from logic.storage import (
+        save_user_profile,
+        load_user_profile,
+        load_user_embedding,
+        save_history_entry,
+        load_history,
+        update_history_entry
+    )
+    from logic.context_parser import parse_context_note
+    from logic.embeddings import generate_embedding
 
 # Load environment variables
 load_dotenv()

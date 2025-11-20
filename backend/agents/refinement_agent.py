@@ -1,7 +1,10 @@
 """RefinementAgent - Refines messages based on free-text instructions."""
 from openai import OpenAI
 import os
-from backend.logic.sanitizer import enforce_character_limit
+try:
+    from backend.logic.sanitizer import enforce_character_limit
+except ImportError:
+    from logic.sanitizer import enforce_character_limit
 
 
 class RefinementAgent:

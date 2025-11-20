@@ -3,7 +3,10 @@ from openai import OpenAI
 import os
 import json
 from typing import Dict, Any
-from backend.logic.sanitizer import enforce_character_limit
+try:
+    from backend.logic.sanitizer import enforce_character_limit
+except ImportError:
+    from logic.sanitizer import enforce_character_limit
 
 
 class MessageDraftAgent:
