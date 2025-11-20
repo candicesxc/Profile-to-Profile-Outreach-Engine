@@ -1,0 +1,30 @@
+# Git Commands to Push to GitHub
+
+Run these commands in your terminal from the Outreach-Engine directory:
+
+1. Initialize git (if not already done):
+   git init
+
+2. Add all files:
+   git add .
+
+3. Verify .env is NOT staged (should return nothing):
+   git status | grep .env
+
+4. Commit changes:
+   git commit -m "Initial commit: Profile-to-Profile Outreach Engine"
+
+5. Add remote:
+   git remote add origin https://github.com/candicesxc/Profile-to-Profile-Outreach-Engine.git
+
+6. Set branch to main:
+   git branch -M main
+
+7. Push to GitHub:
+   git push -u origin main
+
+---
+
+Alternatively, you can run the script:
+   ./push_to_github.sh
+
