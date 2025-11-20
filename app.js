@@ -311,8 +311,14 @@ function completeProgress() {
 }
 
 // Centralized placeholder replacement helper
+// This is the ONLY function that replaces placeholders - called once before saving/displaying
 function replaceNamePlaceholders(text, targetName, userName) {
     if (!text || typeof text !== 'string') return text;
+    
+    // Get user name from localStorage if not provided
+    if (!userName) {
+        userName = localStorage.getItem('pto_myProfileName') || extractFirstName(localStorage.getItem('pto_myProfileText') || '');
+    }
     
     // Replace target contact name placeholders
     if (targetName) {
@@ -327,6 +333,7 @@ function replaceNamePlaceholders(text, targetName, userName) {
         // Also handle "Hi [Name]" patterns
         text = text.replace(/Hi\s+\[Name\]/gi, 'Hi there');
         text = text.replace(/Hi\s+\[FIRST_NAME\]/gi, 'Hi there');
+        text = text.replace(/Hi\s+\[CONTACT_NAME\]/gi, 'Hi there');
     }
     
     // Replace user's own name placeholders
@@ -342,6 +349,14 @@ function replaceNamePlaceholders(text, targetName, userName) {
         // Clean up any double spaces
         text = text.replace(/\s+/g, ' ').trim();
     }
+    
+    // Final check: never show raw placeholders (catch any we missed)
+    text = text.replace(/\[Name\]/gi, 'Hi');
+    text = text.replace(/\[Your Name\]/gi, '');
+    text = text.replace(/\[FIRST_NAME\]/gi, 'Hi');
+    text = text.replace(/\[MY_NAME\]/gi, '');
+    text = text.replace(/\[YOUR_NAME\]/gi, '');
+    text = text.replace(/\[CONTACT_NAME\]/gi, 'Hi');
     
     return text;
 }
