@@ -2,7 +2,7 @@
 from openai import OpenAI
 import os
 import json
-from typing import Dict, Any
+from typing import Dict, Any, List
 try:
     from backend.logic.sanitizer import enforce_character_limit
 except ImportError:
