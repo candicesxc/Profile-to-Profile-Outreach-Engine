@@ -536,19 +536,19 @@ async function generateOutreach() {
         });
         
         const data = await response.json();
-        
+
         if (data.success) {
             currentHistoryId = data.history_id;
-            
+
             // Replace name placeholders BEFORE saving or displaying
             const linkedinMsg = replaceNamePlaceholders(
-                data.linkedin_connection_request, 
-                targetFirstName, 
+                data.linkedin_connection_request,
+                targetFirstName,
                 userFirstName
             );
             const emailMsg = replaceNamePlaceholders(
-                data.cold_outreach_email, 
-                targetFirstName, 
+                data.cold_outreach_email,
+                targetFirstName,
                 userFirstName
             );
             const followupMsg = replaceNamePlaceholders(
@@ -556,25 +556,54 @@ async function generateOutreach() {
                 targetFirstName,
                 userFirstName
             );
-            
+            const postConnectionFromResponse = replaceNamePlaceholders(
+                data.followup_message || data.postConnectionFollowUp || data.post_connection_followup || data.post_connection_message,
+                targetFirstName,
+                userFirstName
+            );
+
             currentMessages = {
                 linkedin: linkedinMsg,
+                postConnection: postConnectionFromResponse || '',
                 email: emailMsg,
                 followup: followupMsg
             };
 
             cacheHistoryMessages(currentHistoryId, currentMessages);
-            
+
             // Display results (already processed, no placeholders)
             document.getElementById('linkedin-result').value = linkedinMsg;
+            document.getElementById('post-connection-result').value = postConnectionFromResponse || 'Generating Post-Connection Follow-Up Message...';
             document.getElementById('email-result').value = emailMsg;
             document.getElementById('followup-result').value = followupMsg;
-            
+
             // Note: History will store these processed messages, so no placeholders will appear there
-            
+
             updateCharCounts();
             document.getElementById('outreach-results').style.display = 'block';
-            showMessage(messageDiv, 'Outreach messages generated successfully!', 'success');
+
+            if (postConnectionFromResponse) {
+                showMessage(messageDiv, 'Outreach messages generated successfully!', 'success');
+            } else {
+                showMessage(messageDiv, 'Generating post-connection follow-up...', 'success');
+                try {
+                    const postConnectionMessage = await generatePostConnectionFollowup(currentHistoryId);
+                    const processedPostConnection = replaceNamePlaceholders(
+                        postConnectionMessage,
+                        targetFirstName,
+                        userFirstName
+                    );
+                    currentMessages.postConnection = processedPostConnection;
+                    document.getElementById('post-connection-result').value = processedPostConnection;
+                    cacheHistoryMessages(currentHistoryId, currentMessages);
+                    updateCharCounts();
+                    showMessage(messageDiv, 'Outreach messages generated successfully!', 'success');
+                } catch (error) {
+                    document.getElementById('post-connection-result').value = 'Could not generate the post-connection follow-up message. Please refresh and try again.';
+                    updateCharCounts();
+                    showMessage(messageDiv, `Follow-up generation error: ${error.message}`, 'error');
+                }
+            }
         } else {
             showMessage(messageDiv, 'Failed to generate outreach', 'error');
         }
@@ -589,6 +618,26 @@ async function generateOutreach() {
             generateBtn.style.cursor = 'pointer';
         }
     }
+}
+
+async function generatePostConnectionFollowup(historyId) {
+    const response = await fetch(`${API_BASE}/api/outreach/followup`, {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+            uuid: getUUID(),
+            history_id: historyId
+        })
+    });
+
+    const data = await response.json();
+    if (!data.success) {
+        throw new Error('Failed to generate post-connection follow-up');
+    }
+
+    return data.followup_message;
 }
 
 // Copy message to clipboard
@@ -642,6 +691,7 @@ function clearOutreachFields() {
     document.getElementById('context-note').value = '';
     document.getElementById('outreach-results').style.display = 'none';
     document.getElementById('outreach-message').style.display = 'none';
+    document.getElementById('post-connection-result').value = '';
     targetFirstName = null;
     currentHistoryId = null;
     currentMessages = {};
@@ -650,10 +700,12 @@ function clearOutreachFields() {
 // Update character counts
 function updateCharCounts() {
     const linkedin = document.getElementById('linkedin-result').value;
+    const postConnection = document.getElementById('post-connection-result').value;
     const email = document.getElementById('email-result').value;
     const followup = document.getElementById('followup-result').value;
-    
+
     updateCharCount('linkedin-count', linkedin.length, 300);
+    updateCharCount('post-connection-count', postConnection.length, 1200);
     updateCharCount('email-count', email.length, 1200);
     updateCharCount('followup-count', followup.length, 1200);
 }
@@ -677,6 +729,7 @@ function refineMessage(type) {
     currentRefinementType = type;
     const messageMap = {
         'linkedin': 'linkedin-result',
+        'postConnection': 'post-connection-result',
         'email': 'email-result',
         'followup': 'followup-result'
     };
@@ -712,7 +765,7 @@ async function applyRefinement() {
                 uuid: getUUID(),
                 message: currentRefinementMessage,
                 refinement_instructions: instructions,
-                message_type: currentRefinementType
+                message_type: currentRefinementType === 'postConnection' ? 'followup' : currentRefinementType
             })
         });
         
@@ -722,6 +775,7 @@ async function applyRefinement() {
             // Update the appropriate textarea
             const resultMap = {
                 'linkedin': 'linkedin-result',
+                'postConnection': 'post-connection-result',
                 'email': 'email-result',
                 'followup': 'followup-result'
             };
@@ -793,7 +847,6 @@ async function loadHistory() {
                         <span class="preview-text">${item.target_preview || ''}...</span>
                     </div>
                     <button class="btn-secondary" onclick="viewHistoryEntry('${item.id}')">View Messages</button>
-                    ${item.status === 'draft' ? `<button class="btn-primary" onclick="markAccepted('${item.id}')">Mark Accepted</button>` : ''}
                 `;
                 historyList.appendChild(itemDiv);
             });
@@ -837,14 +890,14 @@ async function viewHistoryEntry(historyId) {
             };
 
             const processedLinkedIn = override?.linkedin || sanitizeHistoryMessage(entry.linkedin_connection_request, entry);
+            const processedPostConnection = override?.postConnection || sanitizeHistoryMessage(entry.followup_message, entry);
             const processedEmail = override?.email || sanitizeHistoryMessage(entry.cold_outreach_email, entry);
             const processedFollowup = override?.followup || sanitizeHistoryMessage(entry.followup_template, entry);
-            const processedFollowupMsg = entry.followup_message ? sanitizeHistoryMessage(entry.followup_message, entry) : '';
 
             const linkedinText = escapeHtml(processedLinkedIn || '');
+            const postConnectionText = escapeHtml(processedPostConnection || '');
             const emailText = escapeHtml(processedEmail || '');
             const followupText = escapeHtml(processedFollowup || '');
-            const followupMsgText = processedFollowupMsg ? escapeHtml(processedFollowupMsg) : '';
 
             detailDiv.innerHTML = `
                 <h4>LinkedIn Connection Request</h4>
@@ -852,6 +905,12 @@ async function viewHistoryEntry(historyId) {
                 <div class="message-card">
                     <textarea readonly>${linkedinText}</textarea>
                     <button class="copy-btn" onclick="copyMessageFromText('${(processedLinkedIn || '').replace(/'/g, "\\'").replace(/\n/g, '\\n')}', this)">Copy</button>
+                </div>
+                <h4>Post-Connection Follow-Up Message</h4>
+                <p class="helper-text">This is the message to send after they accept your LinkedIn connection request.</p>
+                <div class="message-card">
+                    <textarea readonly>${postConnectionText}</textarea>
+                    <button class="copy-btn" onclick="copyMessageFromText('${(processedPostConnection || '').replace(/'/g, "\\'").replace(/\n/g, '\\n')}', this)">Copy</button>
                 </div>
                 <h4>Cold Outreach Email</h4>
                 <p class="helper-text">A longer email you can send if you prefer email outreach.</p>
@@ -865,14 +924,6 @@ async function viewHistoryEntry(historyId) {
                     <textarea readonly>${followupText}</textarea>
                     <button class="copy-btn" onclick="copyMessageFromText('${(processedFollowup || '').replace(/'/g, "\\'").replace(/\n/g, '\\n')}', this)">Copy</button>
                 </div>
-                ${entry.followup_message ? `
-                <h4>Post-Connection Follow-Up Message</h4>
-                <p class="helper-text">This is the message to send after they accept your LinkedIn connection request.</p>
-                <div class="message-card">
-                    <textarea readonly>${followupMsgText}</textarea>
-                    <button class="copy-btn" onclick="copyMessageFromText('${processedFollowupMsg.replace(/'/g, "\\'").replace(/\n/g, '\\n')}', this)">Copy</button>
-                </div>
-                ` : ''}
             `;
             
             // Find the history item and append detail
@@ -890,36 +941,6 @@ async function viewHistoryEntry(historyId) {
         }
     } catch (error) {
         alert(`Error loading entry: ${error.message}`);
-    }
-}
-
-async function markAccepted(historyId) {
-    if (!confirm('Mark this outreach as accepted? This will generate a follow-up message.')) {
-        return;
-    }
-    
-    try {
-        const response = await fetch(`${API_BASE}/api/outreach/followup`, {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-            },
-            body: JSON.stringify({
-                uuid: getUUID(),
-                history_id: historyId
-            })
-        });
-        
-        const data = await response.json();
-        
-        if (data.success) {
-            alert('Follow-up message generated! Refresh to see it.');
-            loadHistory();
-        } else {
-            alert('Failed to generate follow-up');
-        }
-    } catch (error) {
-        alert(`Error: ${error.message}`);
     }
 }
 
@@ -966,7 +987,7 @@ function initializeApp() {
 // Initialize
 document.addEventListener('DOMContentLoaded', () => {
     // Add character count listeners
-    ['linkedin-result', 'email-result', 'followup-result'].forEach(id => {
+    ['linkedin-result', 'post-connection-result', 'email-result', 'followup-result'].forEach(id => {
         const element = document.getElementById(id);
         if (element) {
             element.addEventListener('input', updateCharCounts);

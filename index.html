@@ -120,23 +120,34 @@
                 <div id="outreach-message" class="message"></div>
             </div>
 
-            <div id="outreach-results" style="display: none;">
-                <div class="result-section">
-                    <h3>LinkedIn Connection Request</h3>
-                    <p class="helper-text">A short note (up to 300 characters) to include with your LinkedIn invitation.</p>
-                    <div class="char-count" id="linkedin-count"></div>
-                    <div class="message-card">
-                        <textarea id="linkedin-result" readonly></textarea>
-                        <button class="copy-btn" onclick="copyMessage('linkedin-result', this)">Copy</button>
+                <div id="outreach-results" style="display: none;">
+                    <div class="result-section">
+                        <h3>LinkedIn Connection Request</h3>
+                        <p class="helper-text">A short note (up to 300 characters) to include with your LinkedIn invitation.</p>
+                        <div class="char-count" id="linkedin-count"></div>
+                        <div class="message-card">
+                            <textarea id="linkedin-result" readonly></textarea>
+                            <button class="copy-btn" onclick="copyMessage('linkedin-result', this)">Copy</button>
+                        </div>
+                        <button class="btn-secondary" onclick="refineMessage('linkedin')">Refine</button>
                     </div>
-                    <button class="btn-secondary" onclick="refineMessage('linkedin')">Refine</button>
-                </div>
 
-                <div class="result-section">
-                    <h3>Cold Outreach Email</h3>
-                    <p class="helper-text">A longer email you can send if you prefer email outreach.</p>
-                    <div class="char-count" id="email-count"></div>
-                    <div class="message-card">
+                    <div class="result-section">
+                        <h3>Post-Connection Follow-Up Message</h3>
+                        <p class="helper-text">Send this after they accept your LinkedIn connection request to continue the conversation.</p>
+                        <div class="char-count" id="post-connection-count"></div>
+                        <div class="message-card">
+                            <textarea id="post-connection-result" readonly></textarea>
+                            <button class="copy-btn" onclick="copyMessage('post-connection-result', this)">Copy</button>
+                        </div>
+                        <button class="btn-secondary" onclick="refineMessage('postConnection')">Refine</button>
+                    </div>
+
+                    <div class="result-section">
+                        <h3>Cold Outreach Email</h3>
+                        <p class="helper-text">A longer email you can send if you prefer email outreach.</p>
+                        <div class="char-count" id="email-count"></div>
+                        <div class="message-card">
                         <textarea id="email-result" readonly></textarea>
                         <button class="copy-btn" onclick="copyMessage('email-result', this)">Copy</button>
                     </div>
