@@ -667,12 +667,6 @@ function showMessage(element, message, type) {
 
 // Initialize
 document.addEventListener('DOMContentLoaded', () => {
-    // Ensure UUID is created
-    getUUID();
-    
-    // Check if profile exists on load
-    checkProfileExists();
-    
     // Add character count listeners
     ['linkedin-result', 'email-result', 'followup-result'].forEach(id => {
         const element = document.getElementById(id);
@@ -681,11 +675,7 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     });
     
-    // Set initial active nav button
-    const currentPage = document.querySelector('.page.active');
-    if (currentPage) {
-        const pageId = currentPage.id.replace('-page', '');
-        document.querySelector(`.nav-btn[data-page="${pageId}"]`).classList.add('active');
-    }
+    // Initialize app flow (handles first visit, profile check, etc.)
+    initializeApp();
 });
 
