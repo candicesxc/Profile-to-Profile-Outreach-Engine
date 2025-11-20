@@ -50,31 +50,53 @@ function showPage(pageName) {
     }
 }
 
-// Check if profile exists
+// Check if profile exists (from localStorage and backend)
 let userProfileData = null;
 let userFirstName = null;
 let userProfileText = null;
 
+function loadProfileFromStorage() {
+    // Load from localStorage first (fast, works offline)
+    const storedText = localStorage.getItem('pto_myProfileText');
+    const storedName = localStorage.getItem('pto_myProfileName');
+    
+    if (storedText) {
+        userProfileText = storedText;
+        userFirstName = storedName || extractFirstName(storedText);
+        userProfileData = { profile_text: storedText };
+        
+        // Update UI to show saved state
+        updateProfileUI(true);
+        if (document.getElementById('profile-text')) {
+            document.getElementById('profile-text').value = storedText;
+        }
+        return true;
+    }
+    return false;
+}
+
 async function checkProfileExists() {
+    // First check localStorage (fast)
+    if (loadProfileFromStorage()) {
+        return true;
+    }
+    
+    // Then check backend (for sync)
     try {
         const response = await fetch(`${API_BASE}/api/user/profile?uuid=${getUUID()}`);
         if (response.ok) {
             const data = await response.json();
             if (data.exists) {
                 userProfileData = data.profile;
-                // Extract first name from profile data if available
-                if (data.profile && data.profile.work_history && data.profile.work_history.length > 0) {
-                    // Try to get name from profile structure
-                    const profileStr = JSON.stringify(data.profile);
-                    userFirstName = extractFirstName(profileStr);
-                }
-                updateProfileUI(true);
-                return true;
+                // Try to get profile text from backend if available
+                // For now, rely on localStorage
+                return false; // Will be handled by localStorage check
             }
         }
     } catch (error) {
-        // Profile doesn't exist or error - that's okay
+        // Backend check failed, but localStorage might have it
     }
+    
     updateProfileUI(false);
     return false;
 }
@@ -98,7 +120,7 @@ function updateProfileUI(profileExists) {
     }
 }
 
-// Centralized name extraction helper
+// Centralized name extraction helper - used for both my profile and target profile
 function extractFirstName(profileText) {
     if (!profileText || typeof profileText !== 'string') return null;
     
@@ -109,7 +131,8 @@ function extractFirstName(profileText) {
     for (const line of lines.slice(0, 5)) {
         const trimmed = line.trim();
         // Skip lines that are clearly not names
-        if (trimmed.length > 50 || trimmed.includes('@') || trimmed.includes('http')) {
+        if (trimmed.length > 50 || trimmed.includes('@') || trimmed.includes('http') || 
+            trimmed.toLowerCase().includes('linkedin') || trimmed.includes('|')) {
             continue;
         }
         const words = trimmed.split(/\s+/);
@@ -117,7 +140,8 @@ function extractFirstName(profileText) {
             const firstWord = words[0];
             // Check if it looks like a name (starts with capital, reasonable length, no special chars)
             if (firstWord.length >= 2 && firstWord.length <= 20 && 
-                /^[A-Z][a-z]+$/.test(firstWord) && !firstWord.includes('.')) {
+                /^[A-Z][a-z]+$/.test(firstWord) && !firstWord.includes('.') && 
+                !firstWord.toLowerCase().includes('view') && !firstWord.toLowerCase().includes('profile')) {
                 return firstWord;
             }
         }
@@ -135,7 +159,12 @@ function extractFirstName(profileText) {
     for (const line of lines.slice(0, 3)) {
         const match = line.match(/^(?:Mr\.|Ms\.|Mrs\.|Dr\.)?\s*([A-Z][a-z]+)/);
         if (match && match[1]) {
-            return match[1];
+            const name = match[1];
+            // Additional validation
+            if (name.length >= 2 && name.length <= 20 && 
+                !name.toLowerCase().includes('view') && !name.toLowerCase().includes('profile')) {
+                return name;
+            }
         }
     }
     
@@ -177,13 +206,19 @@ function completeProfileProgress(interval) {
 async function saveProfile() {
     const profileText = document.getElementById('profile-text').value.trim();
     const messageDiv = document.getElementById('profile-message');
+    const saveBtn = document.getElementById('profile-save-btn');
     
     if (!profileText) {
         showMessage(messageDiv, 'Please enter your profile text', 'error');
         return;
     }
     
-    // Start progress bar
+    // Disable button and show progress
+    if (saveBtn) {
+        saveBtn.disabled = true;
+        saveBtn.style.opacity = '0.6';
+        saveBtn.style.cursor = 'not-allowed';
+    }
     const progressInterval = startProfileProgress();
     
     try {
@@ -201,15 +236,27 @@ async function saveProfile() {
         const data = await response.json();
         
         if (data.success) {
+            // Save to localStorage for persistence
+            localStorage.setItem('pto_myProfileText', profileText);
+            const extractedName = extractFirstName(profileText);
+            if (extractedName) {
+                localStorage.setItem('pto_myProfileName', extractedName);
+            }
+            
             userProfileData = { profile_text: profileText };
             userProfileText = profileText;
-            // Extract user's first name from saved profile
-            userFirstName = extractFirstName(profileText);
+            userFirstName = extractedName;
+            
             updateProfileUI(true);
             showMessage(messageDiv, 'Profile saved successfully!', 'success');
+            
             // Mark first visit as complete
-            localStorage.setItem('pto_firstVisit', 'false');
-            // Don't clear the textarea - let user see what they saved
+            localStorage.setItem('pto_firstVisit', 'true');
+            
+            // Auto-route to Generate Outreach after successful save
+            setTimeout(() => {
+                showPage('outreach');
+            }, 1000);
         } else {
             showMessage(messageDiv, data.message || 'Failed to save profile', 'error');
         }
@@ -217,6 +264,12 @@ async function saveProfile() {
         showMessage(messageDiv, `Error: ${error.message}`, 'error');
     } finally {
         completeProfileProgress(progressInterval);
+        // Re-enable button
+        if (saveBtn) {
+            saveBtn.disabled = false;
+            saveBtn.style.opacity = '1';
+            saveBtn.style.cursor = 'pointer';
+        }
     }
 }
 
