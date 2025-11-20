@@ -61,8 +61,10 @@ python main.py
 The API will be available at `http://localhost:8000`
 
 5. Open the frontend:
-   - Open `frontend/index.html` in a web browser, or
-   - Serve it using a local web server (e.g., `python -m http.server 8080` in the frontend directory)
+   - **GitHub Pages**: Available at `https://candicesxc.github.io/Profile-to-Profile-Outreach-Engine/` (after enabling GitHub Pages in repo settings)
+   - **Local development**: Open `index.html` in a web browser, or serve it using a local web server (e.g., `python -m http.server 8080`)
+
+**Note**: The frontend automatically detects if it's running locally or on GitHub Pages and uses the appropriate backend URL. For GitHub Pages to work, you need to deploy the backend to a cloud service (see `DEPLOYMENT.md`).
 
 ## Usage
 
