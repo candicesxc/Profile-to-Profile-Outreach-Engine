@@ -253,14 +253,14 @@ function deriveTitleFromEntry(entry, fallbackDate) {
     const targetProfile = entry?.target_profile || {};
     const profileText = entry?.target_profile_text || '';
 
-    const name = targetProfile.full_name || targetProfile.name || targetProfile.first_name || targetProfile.firstName || extractFirstName(profileText);
-    const company = extractCompanyFromProfile(targetProfile, profileText);
+    const name = entry.contact_name || targetProfile.full_name || targetProfile.name || targetProfile.first_name || targetProfile.firstName || extractFirstName(profileText);
+    const company = entry.contact_company || extractCompanyFromProfile(targetProfile, profileText);
     return formatContactTitle(name, company, fallbackDate);
 }
 
-function deriveTitleFromPreview(preview, fallbackDate) {
-    const name = extractFirstName(preview);
-    const company = extractCompanyFromText(preview);
+function deriveTitleFromPreview(preview, fallbackDate, contactName, contactCompany) {
+    const name = contactName || extractFirstName(preview);
+    const company = contactCompany || extractCompanyFromText(preview);
     return formatContactTitle(name, company, fallbackDate);
 }
 
@@ -778,7 +778,12 @@ async function loadHistory() {
                 const localDate = new Date(item.timestamp);
                 const formattedDate = localDate.toLocaleString();
 
-                const contactTitle = deriveTitleFromPreview(item.target_preview || '', formattedDate);
+                const contactTitle = deriveTitleFromPreview(
+                    item.target_preview || '',
+                    formattedDate,
+                    item.contact_name,
+                    item.contact_company
+                );
 
                 itemDiv.innerHTML = `
                     <h4 class="history-title">${contactTitle}</h4>
