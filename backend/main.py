@@ -130,6 +130,18 @@ def root():
     return {"message": "Profile-to-Profile Outreach Engine API"}
 
 
+@app.get("/api/user/profile")
+async def check_profile(uuid: str):
+    """Check if user profile exists."""
+    profile = load_user_profile(uuid)
+    if profile:
+        return {
+            "exists": True,
+            "profile": profile
+        }
+    return {"exists": False}
+
+
 @app.post("/api/user/profile", response_model=ProfileResponse)
 async def save_profile(request: ProfileRequest):
     """Save and embed user profile."""
