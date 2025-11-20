@@ -370,16 +370,29 @@ async function generateOutreach() {
     const targetProfile = document.getElementById('target-profile').value.trim();
     const contextNote = document.getElementById('context-note').value.trim();
     const messageDiv = document.getElementById('outreach-message');
+    const generateBtn = document.getElementById('generate-outreach-btn') || 
+                       document.querySelector('#outreach-page .card button.btn-primary');
     
     if (!targetProfile) {
         showMessage(messageDiv, 'Please enter the target profile', 'error');
         return;
     }
     
+    // Check if user profile exists
+    if (!userProfileText) {
+        showMessage(messageDiv, 'Please save your profile first in "My Profile"', 'error');
+        return;
+    }
+    
     // Extract target first name
     targetFirstName = extractFirstName(targetProfile);
     
-    // Start progress bar
+    // Disable button and show progress
+    if (generateBtn) {
+        generateBtn.disabled = true;
+        generateBtn.style.opacity = '0.6';
+        generateBtn.style.cursor = 'not-allowed';
+    }
     startProgress();
     showMessage(messageDiv, 'Generating outreach messages...', 'success');
     
@@ -441,6 +454,12 @@ async function generateOutreach() {
         showMessage(messageDiv, `Error: ${error.message}`, 'error');
     } finally {
         completeProgress();
+        // Re-enable button
+        if (generateBtn) {
+            generateBtn.disabled = false;
+            generateBtn.style.opacity = '1';
+            generateBtn.style.cursor = 'pointer';
+        }
     }
 }
 
