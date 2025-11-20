@@ -32,7 +32,13 @@ app = FastAPI(title="Profile-to-Profile Outreach Engine")
 # CORS middleware
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],  # In production, specify actual origins
+    allow_origins=[
+        "https://candicesxc.github.io",
+        "http://localhost:8000",
+        "http://localhost:8080",
+        "http://127.0.0.1:8000",
+        "http://127.0.0.1:8080",
+    ],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],

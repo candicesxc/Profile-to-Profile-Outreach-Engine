@@ -1,0 +1,94 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Profile-to-Profile Outreach Engine</title>
+    <link rel="stylesheet" href="styles.css">
+    <base href="/Profile-to-Profile-Outreach-Engine/">
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>Profile-to-Profile Outreach Engine</h1>
+            <nav>
+                <button class="nav-btn" onclick="showPage('profile')">My Profile</button>
+                <button class="nav-btn" onclick="showPage('outreach')">Generate Outreach</button>
+                <button class="nav-btn" onclick="showPage('history')">History</button>
+            </nav>
+        </header>
+
+        <!-- Page 1: Save My Profile -->
+        <div id="profile-page" class="page active">
+            <h2>Save My Profile</h2>
+            <p>Paste your LinkedIn profile text below. This will be used to personalize your outreach messages.</p>
+            <textarea id="profile-text" placeholder="Paste your LinkedIn profile here..."></textarea>
+            <button onclick="saveProfile()">Save Profile</button>
+            <div id="profile-message" class="message"></div>
+        </div>
+
+        <!-- Page 2: Outreach Generator -->
+        <div id="outreach-page" class="page">
+            <h2>Generate Outreach</h2>
+            
+            <div class="form-group">
+                <label for="target-profile">Target LinkedIn Profile (required):</label>
+                <textarea id="target-profile" placeholder="Paste the target person's LinkedIn profile..."></textarea>
+            </div>
+
+            <div class="form-group">
+                <label for="context-note">Context Note (optional):</label>
+                <textarea id="context-note" placeholder="e.g., 'Met at AWS Summit', 'Also in fintech', 'Want coffee chat'..."></textarea>
+            </div>
+
+            <button onclick="generateOutreach()">Generate Outreach</button>
+            <div id="outreach-message" class="message"></div>
+
+            <div id="outreach-results" style="display: none;">
+                <div class="result-section">
+                    <h3>LinkedIn Connection Request</h3>
+                    <div class="char-count" id="linkedin-count"></div>
+                    <textarea id="linkedin-result" readonly></textarea>
+                    <button onclick="refineMessage('linkedin')">Refine</button>
+                </div>
+
+                <div class="result-section">
+                    <h3>Cold Outreach Email</h3>
+                    <div class="char-count" id="email-count"></div>
+                    <textarea id="email-result" readonly></textarea>
+                    <button onclick="refineMessage('email')">Refine</button>
+                </div>
+
+                <div class="result-section">
+                    <h3>Follow-Up Template</h3>
+                    <div class="char-count" id="followup-count"></div>
+                    <textarea id="followup-result" readonly></textarea>
+                    <button onclick="refineMessage('followup')">Refine</button>
+                </div>
+            </div>
+
+            <!-- Refinement Modal -->
+            <div id="refinement-modal" class="modal" style="display: none;">
+                <div class="modal-content">
+                    <span class="close" onclick="closeRefinementModal()">&times;</span>
+                    <h3>Refine Message</h3>
+                    <label for="refinement-instructions">Instructions (e.g., 'shorter and warmer', 'more formal'):</label>
+                    <textarea id="refinement-instructions" placeholder="Enter your refinement instructions..."></textarea>
+                    <button onclick="applyRefinement()">Apply Refinement</button>
+                    <div id="refinement-message" class="message"></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Page 3: History -->
+        <div id="history-page" class="page">
+            <h2>Outreach History</h2>
+            <button onclick="loadHistory()">Refresh</button>
+            <div id="history-list"></div>
+        </div>
+    </div>
+
+    <script src="app.js"></script>
+</body>
+</html>
+

@@ -1,0 +1,21 @@
+# GitHub Pages Configuration
+theme: jekyll-theme-minimal
+plugins:
+  - jekyll-feed
+
+# Exclude backend and other non-frontend files from Jekyll processing
+exclude:
+  - backend/
+  - requirements.txt
+  - start_backend.sh
+  - setup_git.sh
+  - push_to_github.sh
+  - EXECUTE_PUSH.sh
+  - .env
+  - .gitignore
+  - README.md
+  - DEPLOYMENT.md
+  - ENV_SETUP.md
+  - PUSH_TO_GITHUB.md
+  - GIT_COMMANDS.txt
+
