@@ -6,7 +6,7 @@ const API_BASE = (() => {
     }
     // If running on GitHub Pages, use deployed backend
     // Replace this URL with your actual deployed backend URL (e.g., Render, Railway, Fly.io)
-    return 'https://profile-outreach-engine.onrender.com';  // TODO: Replace with your deployed backend URL
+    return 'https://profile-to-profile-outreach-engine.onrender.com';  // TODO: Replace with your deployed backend URL
 })();
 
 // Get or create UUID
