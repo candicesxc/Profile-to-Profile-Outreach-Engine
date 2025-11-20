@@ -9,6 +9,27 @@ const API_BASE = (() => {
     return 'https://profile-to-profile-outreach-engine.onrender.com';  // TODO: Replace with your deployed backend URL
 })();
 
+const HISTORY_OVERRIDE_KEY = 'pto_historyOverrides';
+
+function createGlobalInstructions() {
+    const template = document.getElementById('global-instructions-template');
+    if (!template || !template.content) return null;
+    const node = template.content.firstElementChild;
+    return node ? node.cloneNode(true) : null;
+}
+
+function renderGlobalInstructions() {
+    const instructions = createGlobalInstructions();
+    if (!instructions) return;
+
+    document.querySelectorAll('.global-instructions-container').forEach(container => {
+        if (!container.dataset.rendered) {
+            container.appendChild(instructions.cloneNode(true));
+            container.dataset.rendered = 'true';
+        }
+    });
+}
+
 // Get or create UUID
 function getUUID() {
     let uuid = localStorage.getItem('outreach_uuid');
@@ -111,17 +132,24 @@ function updateProfileUI(profileExists) {
     const label = document.getElementById('profile-label');
     const helper = document.getElementById('profile-helper');
     const saveBtn = document.getElementById('profile-save-btn');
-    
+    const goToOutreachBtn = document.getElementById('go-to-outreach-btn');
+
     if (profileExists) {
         statusDiv.style.display = 'block';
         label.textContent = 'Update your profile';
         helper.textContent = 'Paste a new LinkedIn profile here if you want to replace your current one.';
         saveBtn.textContent = 'Update Profile';
+        if (goToOutreachBtn) {
+            goToOutreachBtn.style.display = 'inline-block';
+        }
     } else {
         statusDiv.style.display = 'none';
         label.textContent = 'Paste your LinkedIn profile text below:';
         helper.textContent = 'This will be used to personalize your outreach messages.';
         saveBtn.textContent = 'Save Profile';
+        if (goToOutreachBtn) {
+            goToOutreachBtn.style.display = 'none';
+        }
     }
 }
 
@@ -207,6 +235,15 @@ function completeProfileProgress(interval) {
     }, 500);
 }
 
+function checkProfileWarning() {
+    const warning = document.getElementById('profile-missing-warning');
+    if (!warning) return;
+
+    const storedProfile = (localStorage.getItem('pto_myProfileText') || '').trim();
+    const hasProfile = !!(userProfileText || storedProfile);
+    warning.style.display = hasProfile ? 'none' : 'block';
+}
+
 // Save profile
 async function saveProfile() {
     const profileText = document.getElementById('profile-text').value.trim();
@@ -251,8 +288,9 @@ async function saveProfile() {
             userProfileData = { profile_text: profileText };
             userProfileText = profileText;
             userFirstName = extractedName;
-            
+
             updateProfileUI(true);
+            checkProfileWarning();
             showMessage(messageDiv, 'Profile saved successfully!', 'success');
             
             // Mark first visit as complete
@@ -366,6 +404,34 @@ function replaceNamePlaceholders(text, targetName, userName) {
     return text;
 }
 
+function cacheHistoryMessages(historyId, messages) {
+    if (!historyId || !messages) return;
+    const existing = JSON.parse(localStorage.getItem(HISTORY_OVERRIDE_KEY) || '{}');
+    existing[historyId] = messages;
+    localStorage.setItem(HISTORY_OVERRIDE_KEY, JSON.stringify(existing));
+}
+
+function getHistoryOverride(historyId) {
+    const existing = JSON.parse(localStorage.getItem(HISTORY_OVERRIDE_KEY) || '{}');
+    return existing[historyId] || null;
+}
+
+function sanitizeHistoryMessage(message, entry) {
+    if (!message) return '';
+
+    let targetName = null;
+    const targetProfile = entry?.target_profile || {};
+    const targetProfileText = entry?.target_profile_text || '';
+
+    targetName = targetProfile.full_name || targetProfile.name || targetProfile.first_name || targetProfile.firstName || null;
+    if (!targetName) {
+        targetName = extractFirstName(targetProfileText) || null;
+    }
+
+    const userName = localStorage.getItem('pto_myProfileName') || extractFirstName(localStorage.getItem('pto_myProfileText') || '');
+    return replaceNamePlaceholders(message, targetName, userName);
+}
+
 async function generateOutreach() {
     const targetProfile = document.getElementById('target-profile').value.trim();
     const contextNote = document.getElementById('context-note').value.trim();
@@ -426,8 +492,8 @@ async function generateOutreach() {
                 userFirstName
             );
             const followupMsg = replaceNamePlaceholders(
-                data.followup_template, 
-                targetFirstName, 
+                data.followup_template,
+                targetFirstName,
                 userFirstName
             );
             
@@ -436,6 +502,8 @@ async function generateOutreach() {
                 email: emailMsg,
                 followup: followupMsg
             };
+
+            cacheHistoryMessages(currentHistoryId, currentMessages);
             
             // Display results (already processed, no placeholders)
             document.getElementById('linkedin-result').value = linkedinMsg;
@@ -608,9 +676,12 @@ async function applyRefinement() {
             document.getElementById(resultMap[currentRefinementType]).value = refinedWithNames;
             updateCharCounts();
             showMessage(messageDiv, 'Message refined successfully!', 'success');
-            
+
             // Update current messages (already processed, no placeholders)
             currentMessages[currentRefinementType] = refinedWithNames;
+            if (currentHistoryId) {
+                cacheHistoryMessages(currentHistoryId, currentMessages);
+            }
         } else {
             showMessage(messageDiv, 'Failed to refine message', 'error');
         }
@@ -672,9 +743,10 @@ async function viewHistoryEntry(historyId) {
         
         if (data.success) {
             const entry = data.entry;
+            const override = getHistoryOverride(historyId);
             const detailDiv = document.createElement('div');
             detailDiv.className = 'history-detail card';
-            
+
             // Escape text for HTML but preserve newlines
             const escapeHtml = (text) => {
                 if (!text) return '';
@@ -684,33 +756,38 @@ async function viewHistoryEntry(historyId) {
                           .replace(/"/g, '&quot;')
                           .replace(/'/g, '&#039;');
             };
-            
-            const linkedinText = escapeHtml(entry.linkedin_connection_request || '');
-            const emailText = escapeHtml(entry.cold_outreach_email || '');
-            const followupText = escapeHtml(entry.followup_template || '');
-            const followupMsgText = entry.followup_message ? escapeHtml(entry.followup_message) : '';
-            
+
+            const processedLinkedIn = override?.linkedin || sanitizeHistoryMessage(entry.linkedin_connection_request, entry);
+            const processedEmail = override?.email || sanitizeHistoryMessage(entry.cold_outreach_email, entry);
+            const processedFollowup = override?.followup || sanitizeHistoryMessage(entry.followup_template, entry);
+            const processedFollowupMsg = entry.followup_message ? sanitizeHistoryMessage(entry.followup_message, entry) : '';
+
+            const linkedinText = escapeHtml(processedLinkedIn || '');
+            const emailText = escapeHtml(processedEmail || '');
+            const followupText = escapeHtml(processedFollowup || '');
+            const followupMsgText = processedFollowupMsg ? escapeHtml(processedFollowupMsg) : '';
+
             detailDiv.innerHTML = `
                 <h4>LinkedIn Connection Request</h4>
                 <div class="message-card">
                     <textarea readonly>${linkedinText}</textarea>
-                    <button class="copy-btn" onclick="copyMessageFromText('${(entry.linkedin_connection_request || '').replace(/'/g, "\\'").replace(/\n/g, '\\n')}', this)">Copy</button>
+                    <button class="copy-btn" onclick="copyMessageFromText('${(processedLinkedIn || '').replace(/'/g, "\\'").replace(/\n/g, '\\n')}', this)">Copy</button>
                 </div>
                 <h4>Cold Outreach Email</h4>
                 <div class="message-card">
                     <textarea readonly>${emailText}</textarea>
-                    <button class="copy-btn" onclick="copyMessageFromText('${(entry.cold_outreach_email || '').replace(/'/g, "\\'").replace(/\n/g, '\\n')}', this)">Copy</button>
+                    <button class="copy-btn" onclick="copyMessageFromText('${(processedEmail || '').replace(/'/g, "\\'").replace(/\n/g, '\\n')}', this)">Copy</button>
                 </div>
                 <h4>Follow-Up Template</h4>
                 <div class="message-card">
                     <textarea readonly>${followupText}</textarea>
-                    <button class="copy-btn" onclick="copyMessageFromText('${(entry.followup_template || '').replace(/'/g, "\\'").replace(/\n/g, '\\n')}', this)">Copy</button>
+                    <button class="copy-btn" onclick="copyMessageFromText('${(processedFollowup || '').replace(/'/g, "\\'").replace(/\n/g, '\\n')}', this)">Copy</button>
                 </div>
                 ${entry.followup_message ? `
                 <h4>Follow-Up Message</h4>
                 <div class="message-card">
                     <textarea readonly>${followupMsgText}</textarea>
-                    <button class="copy-btn" onclick="copyMessageFromText('${entry.followup_message.replace(/'/g, "\\'").replace(/\n/g, '\\n')}', this)">Copy</button>
+                    <button class="copy-btn" onclick="copyMessageFromText('${processedFollowupMsg.replace(/'/g, "\\'").replace(/\n/g, '\\n')}', this)">Copy</button>
                 </div>
                 ` : ''}
             `;
@@ -768,6 +845,39 @@ function showMessage(element, message, type) {
     element.textContent = message;
     element.className = `message ${type}`;
     element.style.display = 'block';
+}
+
+function determineInitialPage() {
+    const firstVisitFlag = localStorage.getItem('pto_firstVisit');
+    const storedProfile = (localStorage.getItem('pto_myProfileText') || '').trim();
+
+    if (!firstVisitFlag) {
+        localStorage.setItem('pto_firstVisit', 'true');
+        return 'profile';
+    }
+
+    return storedProfile ? 'outreach' : 'profile';
+}
+
+function initializeApp() {
+    renderGlobalInstructions();
+    getUUID();
+
+    const goToOutreachBtn = document.getElementById('go-to-outreach-btn');
+    if (goToOutreachBtn) {
+        goToOutreachBtn.addEventListener('click', () => showPage('outreach'));
+    }
+
+    // Hydrate profile from storage on every load
+    const hasProfile = loadProfileFromStorage();
+    if (!hasProfile) {
+        updateProfileUI(false);
+    }
+
+    checkProfileWarning();
+
+    const defaultPage = determineInitialPage();
+    showPage(defaultPage);
 }
 
 // Initialize

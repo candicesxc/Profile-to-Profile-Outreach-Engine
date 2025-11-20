@@ -17,10 +17,8 @@
             </nav>
         </header>
 
-        <!-- Page 1: Save My Profile -->
-        <div id="profile-page" class="page active">
-            <!-- Global Instructions (shown on first visit) -->
-            <div id="global-instructions-profile" class="hero-section" style="display: none;">
+        <template id="global-instructions-template">
+            <div class="hero-section">
                 <h2>Generate Personalized LinkedIn Outreach</h2>
                 <p>Create tailored connection requests, emails, and follow-ups based on profile overlap and context.</p>
                 <ol class="hero-steps">
@@ -28,9 +26,13 @@
                     <li>Paste the other person's LinkedIn profile below</li>
                     <li>Click "Generate Outreach" to create personalized messages</li>
                 </ol>
-                <button class="btn-primary" onclick="showPage('outreach')" style="margin-top: 16px;">Go to Generate Outreach</button>
             </div>
-            
+        </template>
+
+        <!-- Page 1: Save My Profile -->
+        <div id="profile-page" class="page active">
+            <div class="global-instructions-container"></div>
+
             <div class="card">
                 <h2>My Profile</h2>
                 <p class="helper-text">Save your LinkedIn profile to personalize outreach messages.</p>
@@ -52,25 +54,17 @@
                         <div class="progress-bar-fill" id="profile-progress-bar"></div>
                     </div>
                 </div>
-                
+
                 <button class="btn-primary" id="profile-save-btn" onclick="saveProfile()">Save Profile</button>
+                <button class="btn-secondary" id="go-to-outreach-btn" style="display: none; margin-left: 8px;">Go to Generate Outreach</button>
                 <div id="profile-message" class="message"></div>
             </div>
         </div>
 
         <!-- Page 2: Outreach Generator -->
         <div id="outreach-page" class="page">
-            <!-- Global Instructions (always visible) -->
-            <div class="hero-section">
-                <h2>Generate Personalized LinkedIn Outreach</h2>
-                <p>Create tailored connection requests, emails, and follow-ups based on profile overlap and context.</p>
-                <ol class="hero-steps">
-                    <li>Save your own LinkedIn profile under "My Profile"</li>
-                    <li>Paste the other person's LinkedIn profile below</li>
-                    <li>Click "Generate Outreach" to create personalized messages</li>
-                </ol>
-            </div>
-            
+            <div class="global-instructions-container"></div>
+
             <!-- Warning if profile missing -->
             <div id="profile-missing-warning" class="card" style="display: none; background: #fff3cd; border-color: #ffc107;">
                 <p style="color: #856404; margin: 0; font-weight: 500;">
@@ -153,6 +147,7 @@
 
         <!-- Page 3: History -->
         <div id="history-page" class="page">
+            <div class="global-instructions-container"></div>
             <div class="card">
                 <h2>Outreach History</h2>
                 <p class="helper-text">View and manage your past outreach attempts.</p>
