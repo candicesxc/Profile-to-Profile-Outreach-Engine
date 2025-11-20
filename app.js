@@ -527,7 +527,7 @@ async function applyRefinement() {
     }
 }
 
-// History
+// History - sort newest first and use local timezone
 async function loadHistory() {
     const historyList = document.getElementById('history-list');
     historyList.innerHTML = '<p>Loading...</p>';
@@ -538,11 +538,24 @@ async function loadHistory() {
         
         if (data.success && data.history.length > 0) {
             historyList.innerHTML = '';
-            data.history.forEach(item => {
+            
+            // Sort by timestamp descending (newest first)
+            const sortedHistory = [...data.history].sort((a, b) => {
+                const timeA = new Date(a.timestamp).getTime();
+                const timeB = new Date(b.timestamp).getTime();
+                return timeB - timeA; // Descending order
+            });
+            
+            sortedHistory.forEach(item => {
                 const itemDiv = document.createElement('div');
                 itemDiv.className = 'card history-item';
+                
+                // Use local timezone for display
+                const localDate = new Date(item.timestamp);
+                const formattedDate = localDate.toLocaleString();
+                
                 itemDiv.innerHTML = `
-                    <h4>Outreach ${new Date(item.timestamp).toLocaleString()}</h4>
+                    <h4>Outreach ${formattedDate}</h4>
                     <div class="meta">
                         <span class="status ${item.status}">${item.status}</span>
                         <span>${item.target_preview}...</span>
