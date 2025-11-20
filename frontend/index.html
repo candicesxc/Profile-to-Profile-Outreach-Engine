@@ -52,6 +52,14 @@
                 </div>
 
                 <div class="result-section">
+                    <h3>Post-Connection Follow-Up Message</h3>
+                    <p class="helper-text">Send this after they accept your LinkedIn connection request to continue the conversation.</p>
+                    <div class="char-count" id="post-connection-count"></div>
+                    <textarea id="post-connection-result" readonly></textarea>
+                    <button onclick="refineMessage('postConnection')">Refine</button>
+                </div>
+
+                <div class="result-section">
                     <h3>Cold Outreach Email</h3>
                     <div class="char-count" id="email-count"></div>
                     <textarea id="email-result" readonly></textarea>
@@ -59,7 +67,7 @@
                 </div>
 
                 <div class="result-section">
-                    <h3>Follow-Up Template</h3>
+                    <h3>Email Follow-Up Message</h3>
                     <div class="char-count" id="followup-count"></div>
                     <textarea id="followup-result" readonly></textarea>
                     <button onclick="refineMessage('followup')">Refine</button>

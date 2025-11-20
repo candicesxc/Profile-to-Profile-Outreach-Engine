@@ -96,23 +96,38 @@ async function generateOutreach() {
         });
         
         const data = await response.json();
-        
+
         if (data.success) {
             currentHistoryId = data.history_id;
             currentMessages = {
                 linkedin: data.linkedin_connection_request,
+                postConnection: '',
                 email: data.cold_outreach_email,
                 followup: data.followup_template
             };
-            
+
             // Display results
             document.getElementById('linkedin-result').value = data.linkedin_connection_request;
+            document.getElementById('post-connection-result').value = 'Generating Post-Connection Follow-Up Message...';
             document.getElementById('email-result').value = data.cold_outreach_email;
             document.getElementById('followup-result').value = data.followup_template;
-            
+
             updateCharCounts();
             document.getElementById('outreach-results').style.display = 'block';
-            showMessage(messageDiv, 'Outreach messages generated successfully!', 'success');
+
+            showMessage(messageDiv, 'Generating post-connection follow-up...', 'success');
+
+            try {
+                const postConnectionMessage = await generatePostConnectionFollowup(currentHistoryId);
+                currentMessages.postConnection = postConnectionMessage;
+                document.getElementById('post-connection-result').value = postConnectionMessage;
+                updateCharCounts();
+                showMessage(messageDiv, 'Outreach messages generated successfully!', 'success');
+            } catch (error) {
+                document.getElementById('post-connection-result').value = 'Could not generate the post-connection follow-up message. Please try again from the History tab.';
+                updateCharCounts();
+                showMessage(messageDiv, `Follow-up generation error: ${error.message}`, 'error');
+            }
         } else {
             showMessage(messageDiv, 'Failed to generate outreach', 'error');
         }
@@ -121,13 +136,35 @@ async function generateOutreach() {
     }
 }
 
+async function generatePostConnectionFollowup(historyId) {
+    const response = await fetch(`${API_BASE}/api/outreach/followup`, {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+            uuid: getUUID(),
+            history_id: historyId
+        })
+    });
+
+    const data = await response.json();
+    if (!data.success) {
+        throw new Error('Failed to generate post-connection follow-up');
+    }
+
+    return data.followup_message;
+}
+
 // Update character counts
 function updateCharCounts() {
     const linkedin = document.getElementById('linkedin-result').value;
+    const postConnection = document.getElementById('post-connection-result').value;
     const email = document.getElementById('email-result').value;
     const followup = document.getElementById('followup-result').value;
-    
+
     updateCharCount('linkedin-count', linkedin.length, 300);
+    updateCharCount('post-connection-count', postConnection.length, 1200);
     updateCharCount('email-count', email.length, 1200);
     updateCharCount('followup-count', followup.length, 1200);
 }
@@ -151,6 +188,7 @@ function refineMessage(type) {
     currentRefinementType = type;
     const messageMap = {
         'linkedin': 'linkedin-result',
+        'postConnection': 'post-connection-result',
         'email': 'email-result',
         'followup': 'followup-result'
     };
@@ -176,7 +214,7 @@ async function applyRefinement() {
     
     try {
         showMessage(messageDiv, 'Refining message...', 'success');
-        
+
         const response = await fetch(`${API_BASE}/api/outreach/refine`, {
             method: 'POST',
             headers: {
@@ -186,7 +224,7 @@ async function applyRefinement() {
                 uuid: getUUID(),
                 message: currentRefinementMessage,
                 refinement_instructions: instructions,
-                message_type: currentRefinementType
+                message_type: currentRefinementType === 'postConnection' ? 'followup' : currentRefinementType
             })
         });
         
@@ -196,6 +234,7 @@ async function applyRefinement() {
             // Update the appropriate textarea
             const resultMap = {
                 'linkedin': 'linkedin-result',
+                'postConnection': 'post-connection-result',
                 'email': 'email-result',
                 'followup': 'followup-result'
             };
@@ -203,7 +242,7 @@ async function applyRefinement() {
             document.getElementById(resultMap[currentRefinementType]).value = data.refined_message;
             updateCharCounts();
             showMessage(messageDiv, 'Message refined successfully!', 'success');
-            
+
             // Update current messages
             currentMessages[currentRefinementType] = data.refined_message;
         } else {
@@ -235,7 +274,6 @@ async function loadHistory() {
                         <span>${item.target_preview}...</span>
                     </div>
                     <button onclick="viewHistoryEntry('${item.id}')">View Details</button>
-                    ${item.status === 'draft' ? `<button onclick="markAccepted('${item.id}')">Mark Accepted</button>` : ''}
                 `;
                 historyList.appendChild(itemDiv);
             });
@@ -259,11 +297,13 @@ async function viewHistoryEntry(historyId) {
             detailDiv.innerHTML = `
                 <h4>LinkedIn Connection Request</h4>
                 <textarea readonly>${entry.linkedin_connection_request || ''}</textarea>
+                <h4>Post-Connection Follow-Up Message</h4>
+                <p class="helper-text">This is the message to send after they accept your LinkedIn connection request.</p>
+                <textarea readonly>${entry.followup_message || ''}</textarea>
                 <h4>Cold Outreach Email</h4>
                 <textarea readonly>${entry.cold_outreach_email || ''}</textarea>
-                <h4>Follow-Up Template</h4>
+                <h4>Email Follow-Up Message</h4>
                 <textarea readonly>${entry.followup_template || ''}</textarea>
-                ${entry.followup_message ? `<h4>Follow-Up Message</h4><textarea readonly>${entry.followup_message}</textarea>` : ''}
             `;
             
             // Find the history item and append detail
@@ -284,36 +324,6 @@ async function viewHistoryEntry(historyId) {
     }
 }
 
-async function markAccepted(historyId) {
-    if (!confirm('Mark this outreach as accepted? This will generate a follow-up message.')) {
-        return;
-    }
-    
-    try {
-        const response = await fetch(`${API_BASE}/api/outreach/followup`, {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-            },
-            body: JSON.stringify({
-                uuid: getUUID(),
-                history_id: historyId
-            })
-        });
-        
-        const data = await response.json();
-        
-        if (data.success) {
-            alert('Follow-up message generated! Refresh to see it.');
-            loadHistory();
-        } else {
-            alert('Failed to generate follow-up');
-        }
-    } catch (error) {
-        alert(`Error: ${error.message}`);
-    }
-}
-
 // Utility
 function showMessage(element, message, type) {
     element.textContent = message;
@@ -325,9 +335,9 @@ function showMessage(element, message, type) {
 document.addEventListener('DOMContentLoaded', () => {
     // Ensure UUID is created
     getUUID();
-    
+
     // Add character count listeners
-    ['linkedin-result', 'email-result', 'followup-result'].forEach(id => {
+    ['linkedin-result', 'post-connection-result', 'email-result', 'followup-result'].forEach(id => {
         const element = document.getElementById(id);
         if (element) {
             element.addEventListener('input', updateCharCounts);
