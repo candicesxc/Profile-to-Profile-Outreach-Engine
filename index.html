@@ -3,52 +3,65 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Profile-to-Profile Outreach Engine</title>
+    <title>Personalized Outreach Generator</title>
     <link rel="stylesheet" href="styles.css?v=2">
 </head>
 <body>
     <div class="container">
         <header>
-            <h1>Profile-to-Profile Outreach Engine</h1>
+            <h1>Personalized Outreach Generator</h1>
             <nav>
-                <button class="nav-btn active" onclick="showPage('profile')" data-page="profile">My Profile</button>
-                <button class="nav-btn" onclick="showPage('outreach')" data-page="outreach">Generate Outreach</button>
-                <button class="nav-btn" onclick="showPage('history')" data-page="history">History</button>
+                <button class="nav-btn active" onclick="showPage('profile')" data-page="profile">Your Profile</button>
+                <button class="nav-btn" onclick="showPage('outreach')" data-page="outreach">Create Messages</button>
+                <button class="nav-btn" onclick="showPage('history')" data-page="history">Saved Messages</button>
             </nav>
         </header>
 
         <template id="global-instructions-template">
             <div class="hero-section">
-                <h2>Generate Personalized LinkedIn Outreach</h2>
-                <p>Create tailored connection requests, emails, and follow-ups based on profile overlap and context.</p>
-                <ol class="hero-steps">
-                    <li>Save your own LinkedIn profile under "My Profile"</li>
-                    <li>Paste the other person's LinkedIn profile below</li>
-                    <li>Click "Generate Outreach" to create personalized messages</li>
-                </ol>
+                <h2>How to Use This Tool</h2>
+                <p>
+                    The Personalized Outreach Generator compares your LinkedIn profile with the profile of the person you are reaching out to, and generates:
+                </p>
+                <ul class="hero-list">
+                    <li>A LinkedIn connection request</li>
+                    <li>A cold outreach email</li>
+                    <li>A follow-up message to send if your email gets no response</li>
+                    <li>A post-connection follow-up message to send after they accept your LinkedIn invitation</li>
+                </ul>
+                <div class="hero-steps-wrapper">
+                    <h3>Steps</h3>
+                    <ol class="hero-steps">
+                        <li>Save your own LinkedIn profile in Your Profile</li>
+                        <li>Paste the other person’s LinkedIn profile in Create Messages</li>
+                        <li>Click Generate to get personalized outreach messages you can copy and send</li>
+                    </ol>
+                </div>
             </div>
         </template>
 
-        <!-- Page 1: Save My Profile -->
+        <!-- Page 1: Your Profile -->
         <div id="profile-page" class="page active">
             <div class="global-instructions-container"></div>
 
             <div class="card">
-                <h2>My Profile</h2>
-                <p class="helper-text">Save your LinkedIn profile to personalize outreach messages.</p>
-                
+                <h2>Your Profile (Required for Personalization)</h2>
+                <p class="helper-text">Paste your full LinkedIn profile text, exactly as it appears on LinkedIn, including your full name, headline, About section, Experience, Education, and Skills.</p>
+                <p class="helper-text">Copying your entire profile ensures your name and background are recognized correctly.</p>
+                <p class="helper-text">Once saved, your profile will be remembered even after you refresh or return later. You can update it anytime.</p>
+
                 <div id="profile-status" style="display: none;">
                     <div class="profile-status">
                         <p>✓ Your profile is saved and will be used to personalize outreach.</p>
                     </div>
                 </div>
-                
+
                 <div class="form-group">
                     <label for="profile-text" id="profile-label">Paste your LinkedIn profile text below:</label>
                     <textarea id="profile-text" placeholder="Paste your LinkedIn profile here..."></textarea>
                     <p class="helper-text" id="profile-helper">This will be used to personalize your outreach messages.</p>
                 </div>
-                
+
                 <div class="progress-bar-container" id="profile-progress-container">
                     <div class="progress-bar">
                         <div class="progress-bar-fill" id="profile-progress-bar"></div>
@@ -56,39 +69,48 @@
                 </div>
 
                 <button class="btn-primary" id="profile-save-btn" onclick="saveProfile()">Save Profile</button>
-                <button class="btn-secondary" id="go-to-outreach-btn" style="display: none; margin-left: 8px;">Go to Generate Outreach</button>
+                <button class="btn-secondary" id="go-to-outreach-btn" style="display: none; margin-left: 8px;">Go to Create Messages</button>
                 <div id="profile-message" class="message"></div>
             </div>
         </div>
 
-        <!-- Page 2: Outreach Generator -->
+        <!-- Page 2: Create Messages -->
         <div id="outreach-page" class="page">
             <div class="global-instructions-container"></div>
 
             <!-- Warning if profile missing -->
             <div id="profile-missing-warning" class="card" style="display: none; background: #fff3cd; border-color: #ffc107;">
                 <p style="color: #856404; margin: 0; font-weight: 500;">
-                    ⚠️ You have not saved your profile yet. Please complete "My Profile" so we can personalize your outreach.
+                    ⚠️ You have not saved your profile yet. Please complete "Your Profile" so we can personalize your outreach.
                 </p>
             </div>
-            
+
             <div class="card">
-                <h2>Generate Outreach</h2>
-                
+                <h2>Create Personalized Outreach</h2>
+                <p class="helper-text">Paste the LinkedIn profile of the person you want to contact. We will compare your background with theirs and generate targeted outreach messages tailored to both of you.</p>
+
                 <div class="form-group">
-                    <label for="target-profile">Target LinkedIn Profile (required)</label>
-                    <p class="helper-text">Paste the other person's LinkedIn profile text to generate personalized outreach.</p>
+                    <label for="target-profile">Their LinkedIn Profile (Required):</label>
+                    <p class="helper-text">Paste their full LinkedIn profile text, including their name, headline, About, and Experience.</p>
                     <textarea id="target-profile" placeholder="Paste the target person's LinkedIn profile..."></textarea>
                 </div>
 
                 <div class="form-group">
-                    <label for="context-note">Context Note (optional)</label>
-                    <p class="helper-text">Add any relevant context like "Met at AWS Summit" or "Also in fintech" to personalize the message.</p>
+                    <label for="context-note">Additional Context (Optional):</label>
+                    <p class="helper-text">Add anything that helps refine the message, such as:</p>
+                    <ul class="helper-list">
+                        <li>How you found them</li>
+                        <li>Where you met</li>
+                        <li>Why you are reaching out</li>
+                        <li>Something about their team or company</li>
+                        <li>A region you are exploring (for example: "interested in roles in Texas")</li>
+                        <li>Recent company news</li>
+                    </ul>
                     <textarea id="context-note" placeholder="e.g., 'Met at AWS Summit', 'Also in fintech', 'Want coffee chat'..."></textarea>
                 </div>
 
-                <button class="btn-primary" id="generate-outreach-btn" onclick="generateOutreach()">Generate Outreach</button>
-                
+                <button class="btn-primary" id="generate-outreach-btn" onclick="generateOutreach()">Generate Messages</button>
+
                 <div class="progress-bar-container" id="progress-container">
                     <div class="progress-bar">
                         <div class="progress-bar-fill" id="progress-bar"></div>
@@ -101,6 +123,7 @@
             <div id="outreach-results" style="display: none;">
                 <div class="result-section">
                     <h3>LinkedIn Connection Request</h3>
+                    <p class="helper-text">A short note (up to 300 characters) to include with your LinkedIn invitation.</p>
                     <div class="char-count" id="linkedin-count"></div>
                     <div class="message-card">
                         <textarea id="linkedin-result" readonly></textarea>
@@ -111,6 +134,7 @@
 
                 <div class="result-section">
                     <h3>Cold Outreach Email</h3>
+                    <p class="helper-text">A longer email you can send if you prefer email outreach.</p>
                     <div class="char-count" id="email-count"></div>
                     <div class="message-card">
                         <textarea id="email-result" readonly></textarea>
@@ -120,7 +144,8 @@
                 </div>
 
                 <div class="result-section">
-                    <h3>Follow-Up Template</h3>
+                    <h3>Email Follow-Up Message</h3>
+                    <p class="helper-text">Send this if they do not respond to your initial email.</p>
                     <div class="char-count" id="followup-count"></div>
                     <div class="message-card">
                         <textarea id="followup-result" readonly></textarea>
@@ -145,13 +170,20 @@
             </div>
         </div>
 
-        <!-- Page 3: History -->
+        <!-- Page 3: Saved Messages -->
         <div id="history-page" class="page">
             <div class="global-instructions-container"></div>
             <div class="card">
-                <h2>Outreach History</h2>
-                <p class="helper-text">View and manage your past outreach attempts.</p>
-                <button class="btn-primary" onclick="loadHistory()">Refresh</button>
+                <h2>Saved Messages</h2>
+                <p class="helper-text">This tab stores the exact final versions of the outreach messages you generated, including any refinements.</p>
+                <p class="helper-text">Each saved entry includes:</p>
+                <ul class="helper-list">
+                    <li>Your LinkedIn connection request</li>
+                    <li>Your cold outreach email</li>
+                    <li>Your email follow-up message</li>
+                    <li>Your post-connection LinkedIn follow-up message</li>
+                </ul>
+                <button class="btn-primary" onclick="loadHistory()">Refresh Saved Messages</button>
                 <div id="history-list"></div>
             </div>
         </div>
