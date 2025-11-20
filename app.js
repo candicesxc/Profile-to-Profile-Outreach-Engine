@@ -46,7 +46,7 @@ function showPage(pageName) {
     } else if (pageName === 'profile') {
         checkProfileExists();
     } else if (pageName === 'outreach') {
-        checkProfileWarning();
+        setTimeout(checkProfileWarning, 100);
     }
 }
 
