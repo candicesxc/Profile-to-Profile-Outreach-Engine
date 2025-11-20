@@ -60,9 +60,14 @@ function loadProfileFromStorage() {
     const storedText = localStorage.getItem('pto_myProfileText');
     const storedName = localStorage.getItem('pto_myProfileName');
     
-    if (storedText) {
+    if (storedText && storedText.trim().length > 0) {
         userProfileText = storedText;
+        // Use stored name if available, otherwise extract it
         userFirstName = storedName || extractFirstName(storedText);
+        // If we extracted a name, save it for future use
+        if (!storedName && userFirstName) {
+            localStorage.setItem('pto_myProfileName', userFirstName);
+        }
         userProfileData = { profile_text: storedText };
         
         // Update UI to show saved state
