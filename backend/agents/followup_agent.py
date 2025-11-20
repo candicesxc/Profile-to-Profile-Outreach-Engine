@@ -1,6 +1,7 @@
 """FollowUpAgent - Generates follow-up messages when outreach is accepted."""
 from openai import OpenAI
 import os
+from typing import Dict, Any
 try:
     from backend.logic.sanitizer import enforce_character_limit
 except ImportError:
