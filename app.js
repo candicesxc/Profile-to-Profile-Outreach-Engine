@@ -136,16 +136,16 @@ function updateProfileUI(profileExists) {
 
     if (profileExists) {
         statusDiv.style.display = 'block';
-        label.textContent = 'Update your profile';
-        helper.textContent = 'Paste a new LinkedIn profile here if you want to replace your current one.';
+        label.textContent = 'Update your LinkedIn profile text:';
+        helper.textContent = 'Replace your saved LinkedIn profile to refresh personalization anytime.';
         saveBtn.textContent = 'Update Profile';
         if (goToOutreachBtn) {
             goToOutreachBtn.style.display = 'inline-block';
         }
     } else {
         statusDiv.style.display = 'none';
-        label.textContent = 'Paste your LinkedIn profile text below:';
-        helper.textContent = 'This will be used to personalize your outreach messages.';
+        label.textContent = 'Paste your full LinkedIn profile text below:';
+        helper.textContent = 'Include your name, headline, About, Experience, Education, and Skills so we can personalize every message.';
         saveBtn.textContent = 'Save Profile';
         if (goToOutreachBtn) {
             goToOutreachBtn.style.display = 'none';
@@ -202,6 +202,66 @@ function extractFirstName(profileText) {
     }
     
     return null;
+}
+
+function extractCompanyFromText(text) {
+    if (!text || typeof text !== 'string') return null;
+
+    // Look for patterns like " at Company" or "@ Company"
+    const companyMatch = text.match(/\b(?:at|@)\s+([A-Z][A-Za-z0-9&.,'\- ]{2,})/);
+    if (companyMatch && companyMatch[1]) {
+        return companyMatch[1].trim();
+    }
+
+    const lines = text.split('\n').map(line => line.trim()).filter(Boolean);
+    if (lines.length > 1) {
+        // Check headline or second line for company names separated by " at " or commas
+        const headline = lines[1];
+        const headlineMatch = headline.match(/(?: at |@)([A-Z][A-Za-z0-9&.,'\- ]{2,})/);
+        if (headlineMatch && headlineMatch[1]) {
+            return headlineMatch[1].trim();
+        }
+    }
+
+    return null;
+}
+
+function extractCompanyFromProfile(profileData, profileText) {
+    if (!profileData) profileData = {};
+
+    if (profileData.current_company) {
+        return profileData.current_company;
+    }
+
+    if (Array.isArray(profileData.work_history) && profileData.work_history.length > 0) {
+        const company = profileData.work_history[0].company || profileData.work_history[0].organization;
+        if (company) return company;
+    }
+
+    return extractCompanyFromText(profileText);
+}
+
+function formatContactTitle(name, company, fallbackDate) {
+    if (name && company) return `${name} - ${company}`;
+    if (name) return name;
+    if (company) return company;
+    if (fallbackDate) return `Saved outreach (${fallbackDate})`;
+    return 'Saved outreach';
+}
+
+function deriveTitleFromEntry(entry, fallbackDate) {
+    const targetProfile = entry?.target_profile || {};
+    const profileText = entry?.target_profile_text || '';
+
+    const name = targetProfile.full_name || targetProfile.name || targetProfile.first_name || targetProfile.firstName || extractFirstName(profileText);
+    const company = extractCompanyFromProfile(targetProfile, profileText);
+    return formatContactTitle(name, company, fallbackDate);
+}
+
+function deriveTitleFromPreview(preview, fallbackDate) {
+    const name = extractFirstName(preview);
+    const company = extractCompanyFromText(preview);
+    return formatContactTitle(name, company, fallbackDate);
 }
 
 // Progress bar for profile save
@@ -296,7 +356,7 @@ async function saveProfile() {
             // Mark first visit as complete
             localStorage.setItem('pto_firstVisit', 'true');
             
-            // Auto-route to Generate Outreach after successful save
+            // Auto-route to Create Messages after successful save
             setTimeout(() => {
                 showPage('outreach');
             }, 1000);
@@ -446,7 +506,7 @@ async function generateOutreach() {
     
     // Check if user profile exists
     if (!userProfileText) {
-        showMessage(messageDiv, 'Please save your profile first in "My Profile"', 'error');
+        showMessage(messageDiv, 'Please save your profile first in "Your Profile"', 'error');
         return;
     }
     
@@ -712,24 +772,28 @@ async function loadHistory() {
             sortedHistory.forEach(item => {
                 const itemDiv = document.createElement('div');
                 itemDiv.className = 'card history-item';
-                
+                itemDiv.dataset.historyId = item.id;
+
                 // Use local timezone for display
                 const localDate = new Date(item.timestamp);
                 const formattedDate = localDate.toLocaleString();
-                
+
+                const contactTitle = deriveTitleFromPreview(item.target_preview || '', formattedDate);
+
                 itemDiv.innerHTML = `
-                    <h4>Outreach ${formattedDate}</h4>
+                    <h4 class="history-title">${contactTitle}</h4>
+                    <p class="history-subtext">Saved on ${formattedDate}</p>
                     <div class="meta">
                         <span class="status ${item.status}">${item.status}</span>
-                        <span>${item.target_preview}...</span>
+                        <span class="preview-text">${item.target_preview || ''}...</span>
                     </div>
-                    <button class="btn-secondary" onclick="viewHistoryEntry('${item.id}')">View Details</button>
+                    <button class="btn-secondary" onclick="viewHistoryEntry('${item.id}')">View Messages</button>
                     ${item.status === 'draft' ? `<button class="btn-primary" onclick="markAccepted('${item.id}')">Mark Accepted</button>` : ''}
                 `;
                 historyList.appendChild(itemDiv);
             });
         } else {
-            historyList.innerHTML = '<p>No outreach history yet.</p>';
+            historyList.innerHTML = '<p>No saved messages yet.</p>';
         }
     } catch (error) {
         historyList.innerHTML = `<p class="error">Error loading history: ${error.message}</p>`;
@@ -746,6 +810,16 @@ async function viewHistoryEntry(historyId) {
             const override = getHistoryOverride(historyId);
             const detailDiv = document.createElement('div');
             detailDiv.className = 'history-detail card';
+
+            const itemCard = document.querySelector(`.history-item[data-history-id="${historyId}"]`);
+            if (itemCard) {
+                const localDate = entry.timestamp ? new Date(entry.timestamp).toLocaleString() : '';
+                const refinedTitle = deriveTitleFromEntry(entry, localDate);
+                const titleEl = itemCard.querySelector('.history-title');
+                if (titleEl) titleEl.textContent = refinedTitle;
+                const subtextEl = itemCard.querySelector('.history-subtext');
+                if (subtextEl && localDate) subtextEl.textContent = `Saved on ${localDate}`;
+            }
 
             // Escape text for HTML but preserve newlines
             const escapeHtml = (text) => {
@@ -769,22 +843,26 @@ async function viewHistoryEntry(historyId) {
 
             detailDiv.innerHTML = `
                 <h4>LinkedIn Connection Request</h4>
+                <p class="helper-text">A short note (up to 300 characters) to include with your LinkedIn invitation.</p>
                 <div class="message-card">
                     <textarea readonly>${linkedinText}</textarea>
                     <button class="copy-btn" onclick="copyMessageFromText('${(processedLinkedIn || '').replace(/'/g, "\\'").replace(/\n/g, '\\n')}', this)">Copy</button>
                 </div>
                 <h4>Cold Outreach Email</h4>
+                <p class="helper-text">A longer email you can send if you prefer email outreach.</p>
                 <div class="message-card">
                     <textarea readonly>${emailText}</textarea>
                     <button class="copy-btn" onclick="copyMessageFromText('${(processedEmail || '').replace(/'/g, "\\'").replace(/\n/g, '\\n')}', this)">Copy</button>
                 </div>
-                <h4>Follow-Up Template</h4>
+                <h4>Email Follow-Up Message</h4>
+                <p class="helper-text">This is the message to send if they do not respond to your initial email.</p>
                 <div class="message-card">
                     <textarea readonly>${followupText}</textarea>
                     <button class="copy-btn" onclick="copyMessageFromText('${(processedFollowup || '').replace(/'/g, "\\'").replace(/\n/g, '\\n')}', this)">Copy</button>
                 </div>
                 ${entry.followup_message ? `
-                <h4>Follow-Up Message</h4>
+                <h4>Post-Connection Follow-Up Message</h4>
+                <p class="helper-text">This is the message to send after they accept your LinkedIn connection request.</p>
                 <div class="message-card">
                     <textarea readonly>${followupMsgText}</textarea>
                     <button class="copy-btn" onclick="copyMessageFromText('${processedFollowupMsg.replace(/'/g, "\\'").replace(/\n/g, '\\n')}', this)">Copy</button>
