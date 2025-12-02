@@ -79,6 +79,17 @@ refinement_agent = RefinementAgent()
 followup_agent = FollowUpAgent()
 
 
+def _require_openai_key():
+    """Ensure the OpenAI API key is present before handling LLM calls."""
+    api_key = os.getenv("OPENAI_API_KEY")
+    if not api_key:
+        raise HTTPException(
+            status_code=500,
+            detail="OpenAI API key is not configured. Set OPENAI_API_KEY and try again."
+        )
+    return api_key
+
+
 def _extract_first_name(profile_text: str) -> str | None:
     """Lightweight heuristic to capture a contact's first name from profile text."""
     if not profile_text:
@@ -237,6 +248,8 @@ async def save_profile(request: ProfileRequest):
 async def generate_outreach(request: OutreachRequest):
     """Generate outreach messages."""
     try:
+        _require_openai_key()
+
         # Load user profile
         user_profile = load_user_profile(request.uuid)
         if not user_profile:
@@ -311,6 +324,8 @@ async def generate_outreach(request: OutreachRequest):
 async def refine_message(request: RefinementRequest):
     """Refine a message based on user instructions."""
     try:
+        _require_openai_key()
+
         # Sanitize inputs
         message = sanitize_input(request.message)
         instructions = sanitize_input(request.refinement_instructions)
@@ -339,6 +354,8 @@ async def refine_message(request: RefinementRequest):
 async def generate_followup(request: FollowUpRequest):
     """Generate follow-up message when outreach is accepted."""
     try:
+        _require_openai_key()
+
         # Load user profile
         user_profile = load_user_profile(request.uuid)
         if not user_profile:

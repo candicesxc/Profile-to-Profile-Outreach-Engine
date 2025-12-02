@@ -534,8 +534,13 @@ async function generateOutreach() {
                 context_note: contextNote
             })
         });
-        
+
         const data = await response.json();
+
+        if (!response.ok) {
+            const detail = data.detail || 'Failed to generate outreach';
+            throw new Error(detail);
+        }
 
         if (data.success) {
             currentHistoryId = data.history_id;
