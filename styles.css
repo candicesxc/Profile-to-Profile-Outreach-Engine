@@ -647,7 +647,7 @@ button {
 .landing-container {
     max-width: 900px;
     margin: 0 auto;
-    padding: 60px 24px;
+    padding: 40px 24px;
     text-align: center;
     animation: fadeIn 0.6s ease-in;
     width: 100%;
@@ -665,7 +665,7 @@ button {
 }
 
 .landing-logo-container {
-    margin-bottom: 32px;
+    margin-bottom: 20px;
     display: flex;
     justify-content: center;
 }
@@ -677,10 +677,10 @@ button {
 }
 
 .landing-title {
-    font-size: 48px;
+    font-size: 38px;
     font-weight: 700;
     color: #0a66c2;
-    margin-bottom: 56px;
+    margin-bottom: 32px;
     letter-spacing: -0.03em;
     line-height: 1.2;
     background: linear-gradient(135deg, #0a66c2 0%, #004182 100%);
@@ -693,8 +693,8 @@ button {
     background: #ffffff;
     border: 1px solid #e0e0e0;
     border-radius: 20px;
-    padding: 56px;
-    margin-bottom: 48px;
+    padding: 40px;
+    margin-bottom: 32px;
     box-shadow: 0 4px 16px rgba(0,0,0,.08), 0 2px 8px rgba(0,0,0,.04);
     text-align: left;
     transition: box-shadow 0.3s ease;
@@ -708,7 +708,7 @@ button {
     font-size: 28px;
     font-weight: 700;
     color: #000000e6;
-    margin-bottom: 20px;
+    margin-bottom: 16px;
     letter-spacing: -0.02em;
     text-align: center;
 }
@@ -716,13 +716,13 @@ button {
 .landing-instructions > p {
     font-size: 17px;
     color: #666666;
-    margin-bottom: 24px;
+    margin-bottom: 20px;
     line-height: 1.7;
     text-align: center;
 }
 
 .landing-list {
-    margin: 0 0 32px 0;
+    margin: 0 0 24px 0;
     padding: 0;
     list-style: none;
     color: #000000e6;
@@ -731,7 +731,7 @@ button {
 
 .landing-list li {
     font-size: 16px;
-    padding: 12px 0 12px 32px;
+    padding: 10px 0 10px 32px;
     position: relative;
 }
 
@@ -752,15 +752,15 @@ button {
 }
 
 .landing-steps-wrapper {
-    margin-top: 32px;
-    padding-top: 32px;
+    margin-top: 24px;
+    padding-top: 24px;
     border-top: 1px solid #e0e0e0;
 }
 
 .landing-steps-wrapper h3 {
     font-size: 22px;
     font-weight: 600;
-    margin-bottom: 20px;
+    margin-bottom: 16px;
     color: #000000e6;
     letter-spacing: -0.01em;
     text-align: center;
@@ -774,7 +774,7 @@ button {
 }
 
 .landing-steps li {
-    padding: 16px 0;
+    padding: 12px 0;
     font-size: 16px;
     color: #000000e6;
     line-height: 1.6;
