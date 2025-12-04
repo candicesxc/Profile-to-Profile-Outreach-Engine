@@ -5,11 +5,13 @@
 }
 
 body {
-    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
     background: #f3f2ef;
     min-height: 100vh;
     padding: 0;
     color: #000000e6;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
 }
 
 .container {
@@ -22,18 +24,37 @@ body {
 header {
     background: #ffffff;
     border-bottom: 1px solid #e0e0e0;
-    padding: 12px 24px;
+    padding: 16px 24px;
     box-shadow: 0 0 0 1px rgba(0,0,0,.08), 0 2px 4px rgba(0,0,0,.08);
     position: sticky;
     top: 0;
     z-index: 100;
 }
 
-header h1 {
-    font-size: 20px;
-    font-weight: 600;
-    color: #0a66c2;
+.header-content {
+    display: flex;
+    align-items: center;
     margin-bottom: 16px;
+}
+
+.logo-container {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.logo {
+    width: 40px;
+    height: 40px;
+    flex-shrink: 0;
+}
+
+header h1 {
+    font-size: 24px;
+    font-weight: 700;
+    color: #0a66c2;
+    margin: 0;
+    letter-spacing: -0.02em;
 }
 
 nav {
@@ -43,30 +64,38 @@ nav {
 }
 
 .nav-btn {
-    padding: 8px 16px;
+    padding: 10px 20px;
     background: transparent;
-    border: 1px solid #0a66c2;
+    border: 1.5px solid #0a66c2;
     color: #0a66c2;
     border-radius: 24px;
     cursor: pointer;
     font-size: 14px;
-    font-weight: 500;
-    transition: all 0.2s;
+    font-weight: 600;
+    transition: all 0.2s ease;
+    letter-spacing: -0.01em;
 }
 
 .nav-btn:hover {
     background: #e3f0f8;
     border-color: #0a66c2;
+    transform: translateY(-1px);
 }
 
 .nav-btn.active {
     background: #0a66c2;
     color: white;
+    box-shadow: 0 2px 4px rgba(10, 102, 194, 0.2);
+}
+
+.nav-btn.active:hover {
+    background: #004182;
+    transform: translateY(-1px);
 }
 
 .page {
     display: none;
-    padding: 24px;
+    padding: 32px 24px;
     max-width: 1128px;
     margin: 0 auto;
 }
@@ -78,30 +107,35 @@ nav {
 .hero-section {
     background: #ffffff;
     border: 1px solid #e0e0e0;
-    border-radius: 8px;
-    padding: 32px;
+    border-radius: 12px;
+    padding: 40px;
     margin-bottom: 24px;
-    box-shadow: 0 0 0 1px rgba(0,0,0,.08), 0 2px 4px rgba(0,0,0,.08);
+    box-shadow: 0 1px 3px rgba(0,0,0,.08), 0 1px 2px rgba(0,0,0,.04);
 }
 
 .hero-section h2 {
-    font-size: 24px;
-    font-weight: 600;
+    font-size: 28px;
+    font-weight: 700;
     color: #000000e6;
-    margin-bottom: 12px;
+    margin-bottom: 16px;
+    letter-spacing: -0.02em;
+    line-height: 1.2;
 }
 
 .hero-section p {
     font-size: 16px;
     color: #666666;
     margin-bottom: 24px;
-    line-height: 1.5;
+    line-height: 1.6;
+    font-weight: 400;
 }
 
 .hero-section h3 {
-    font-size: 18px;
+    font-size: 20px;
     font-weight: 600;
     margin-bottom: 12px;
+    color: #000000e6;
+    letter-spacing: -0.01em;
 }
 
 .hero-list {
@@ -150,16 +184,19 @@ nav {
 
 h2 {
     color: #000000e6;
-    margin-bottom: 16px;
-    font-size: 20px;
-    font-weight: 600;
+    margin-bottom: 20px;
+    font-size: 28px;
+    font-weight: 700;
+    letter-spacing: -0.02em;
+    line-height: 1.2;
 }
 
 .helper-text {
-    font-size: 14px;
+    font-size: 15px;
     color: #666666;
     margin-bottom: 16px;
-    line-height: 1.5;
+    line-height: 1.6;
+    font-weight: 400;
 }
 
 .helper-list {
@@ -172,10 +209,15 @@ h2 {
 .card {
     background: #ffffff;
     border: 1px solid #e0e0e0;
-    border-radius: 8px;
-    padding: 24px;
-    margin-bottom: 16px;
-    box-shadow: 0 0 0 1px rgba(0,0,0,.08), 0 2px 4px rgba(0,0,0,.08);
+    border-radius: 12px;
+    padding: 32px;
+    margin-bottom: 24px;
+    box-shadow: 0 1px 3px rgba(0,0,0,.08), 0 1px 2px rgba(0,0,0,.04);
+    transition: box-shadow 0.2s ease;
+}
+
+.card:hover {
+    box-shadow: 0 4px 6px rgba(0,0,0,.08), 0 2px 4px rgba(0,0,0,.04);
 }
 
 .form-group {
@@ -184,48 +226,58 @@ h2 {
 
 label {
     display: block;
-    margin-bottom: 8px;
+    margin-bottom: 10px;
     color: #000000e6;
     font-weight: 600;
-    font-size: 14px;
+    font-size: 15px;
+    letter-spacing: -0.01em;
 }
 
 textarea {
     width: 100%;
     min-height: 150px;
-    padding: 12px;
-    border: 1px solid #e0e0e0;
-    border-radius: 4px;
-    font-size: 14px;
+    padding: 14px 16px;
+    border: 1.5px solid #e0e0e0;
+    border-radius: 8px;
+    font-size: 15px;
     font-family: inherit;
     resize: vertical;
-    transition: border-color 0.2s;
+    transition: all 0.2s ease;
     background: #ffffff;
+    line-height: 1.6;
 }
 
 textarea:focus {
     outline: none;
     border-color: #0a66c2;
-    box-shadow: 0 0 0 1px #0a66c2;
+    box-shadow: 0 0 0 3px rgba(10, 102, 194, 0.1);
 }
 
 button {
-    padding: 8px 24px;
+    padding: 10px 24px;
     border-radius: 24px;
-    font-size: 16px;
+    font-size: 15px;
     font-weight: 600;
     cursor: pointer;
-    transition: all 0.2s;
+    transition: all 0.2s ease;
     border: none;
+    letter-spacing: -0.01em;
 }
 
 .btn-primary {
     background: #0a66c2;
     color: white;
+    box-shadow: 0 1px 2px rgba(0,0,0,.1);
 }
 
 .btn-primary:hover {
     background: #004182;
+    box-shadow: 0 2px 4px rgba(0,0,0,.15);
+    transform: translateY(-1px);
+}
+
+.btn-primary:active {
+    transform: translateY(0);
 }
 
 .btn-secondary {
@@ -273,19 +325,25 @@ button {
 
 .result-section {
     margin-top: 24px;
-    padding: 24px;
+    padding: 28px;
     background: #ffffff;
     border: 1px solid #e0e0e0;
-    border-radius: 8px;
-    box-shadow: 0 0 0 1px rgba(0,0,0,.08), 0 2px 4px rgba(0,0,0,.08);
+    border-radius: 12px;
+    box-shadow: 0 1px 3px rgba(0,0,0,.08), 0 1px 2px rgba(0,0,0,.04);
     position: relative;
+    transition: box-shadow 0.2s ease;
+}
+
+.result-section:hover {
+    box-shadow: 0 4px 6px rgba(0,0,0,.08), 0 2px 4px rgba(0,0,0,.04);
 }
 
 .result-section h3 {
     color: #000000e6;
     margin-bottom: 12px;
-    font-size: 18px;
+    font-size: 22px;
     font-weight: 600;
+    letter-spacing: -0.01em;
 }
 
 .message-card {
@@ -334,9 +392,10 @@ button {
 }
 
 .char-count {
-    font-size: 12px;
+    font-size: 13px;
     color: #666;
-    margin-bottom: 8px;
+    margin-bottom: 10px;
+    font-weight: 500;
 }
 
 .char-count.warning {
@@ -350,10 +409,11 @@ button {
 #outreach-results textarea {
     min-height: 120px;
     background: #fafafa;
-    border: 1px solid #e0e0e0;
+    border: 1.5px solid #e0e0e0;
     padding: 16px;
-    font-size: 14px;
-    line-height: 1.5;
+    font-size: 15px;
+    line-height: 1.6;
+    border-radius: 8px;
 }
 
 .result-section .btn-secondary {
@@ -404,13 +464,22 @@ button {
 
 .modal-content {
     background: white;
-    padding: 30px;
-    border-radius: 12px;
+    padding: 32px;
+    border-radius: 16px;
     max-width: 600px;
     width: 90%;
     max-height: 80vh;
     overflow-y: auto;
     position: relative;
+    box-shadow: 0 20px 25px -5px rgba(0,0,0,.1), 0 10px 10px -5px rgba(0,0,0,.04);
+}
+
+.modal-content h3 {
+    font-size: 24px;
+    font-weight: 700;
+    margin-bottom: 20px;
+    color: #000000e6;
+    letter-spacing: -0.02em;
 }
 
 .close {
@@ -433,19 +502,26 @@ button {
 }
 
 .history-item {
-    padding: 20px;
+    padding: 24px;
     margin-bottom: 16px;
     background: #ffffff;
-    border-radius: 8px;
+    border-radius: 12px;
     border: 1px solid #e0e0e0;
-    box-shadow: 0 0 0 1px rgba(0,0,0,.04), 0 2px 4px rgba(0,0,0,.06);
+    box-shadow: 0 1px 3px rgba(0,0,0,.08), 0 1px 2px rgba(0,0,0,.04);
+    transition: all 0.2s ease;
+}
+
+.history-item:hover {
+    box-shadow: 0 4px 6px rgba(0,0,0,.08), 0 2px 4px rgba(0,0,0,.04);
+    transform: translateY(-1px);
 }
 
 .history-title {
     color: #0a66c2;
-    margin-bottom: 6px;
-    font-size: 18px;
+    margin-bottom: 8px;
+    font-size: 20px;
     font-weight: 700;
+    letter-spacing: -0.01em;
 }
 
 .history-subtext {
@@ -502,10 +578,68 @@ button {
 .history-detail h4 {
     margin-bottom: 12px;
     color: #000000e6;
+    font-size: 18px;
+    font-weight: 600;
+    letter-spacing: -0.01em;
 }
 
 .history-detail textarea {
     min-height: 80px;
     margin-bottom: 10px;
+}
+
+/* Responsive design improvements */
+@media (max-width: 768px) {
+    header {
+        padding: 12px 16px;
+    }
+    
+    .header-content {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 12px;
+    }
+    
+    header h1 {
+        font-size: 20px;
+    }
+    
+    .logo {
+        width: 32px;
+        height: 32px;
+    }
+    
+    .page {
+        padding: 20px 16px;
+    }
+    
+    .card {
+        padding: 24px;
+    }
+    
+    .hero-section {
+        padding: 24px;
+    }
+    
+    h2 {
+        font-size: 24px;
+    }
+    
+    .result-section h3 {
+        font-size: 20px;
+    }
+}
+
+/* Additional polish */
+.helper-list li {
+    font-size: 15px;
+    line-height: 1.6;
+    margin-bottom: 4px;
+}
+
+.hero-list li {
+    font-size: 16px;
+    line-height: 1.6;
+    margin-bottom: 4px;
 }
 
