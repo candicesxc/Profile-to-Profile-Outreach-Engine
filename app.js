@@ -11,23 +11,18 @@ const API_BASE = (() => {
 
 const HISTORY_OVERRIDE_KEY = 'pto_historyOverrides';
 
-function createGlobalInstructions() {
-    const template = document.getElementById('global-instructions-template');
-    if (!template || !template.content) return null;
-    const node = template.content.firstElementChild;
-    return node ? node.cloneNode(true) : null;
-}
-
-function renderGlobalInstructions() {
-    const instructions = createGlobalInstructions();
-    if (!instructions) return;
-
-    document.querySelectorAll('.global-instructions-container').forEach(container => {
-        if (!container.dataset.rendered) {
-            container.appendChild(instructions.cloneNode(true));
-            container.dataset.rendered = 'true';
-        }
-    });
+// Start outreach flow - called from landing page
+function startOutreach() {
+    // Mark that user has seen landing page
+    localStorage.setItem('pto_hasSeenLanding', 'true');
+    
+    // Check if profile exists
+    const hasProfile = loadProfileFromStorage();
+    if (hasProfile) {
+        showPage('outreach');
+    } else {
+        showPage('profile');
+    }
 }
 
 // Get or create UUID
@@ -50,9 +45,43 @@ function generateUUID() {
 
 // Page navigation
 function showPage(pageName) {
+    // Hide landing page and show main nav
+    const landingPage = document.getElementById('landing-page');
+    const mainNav = document.getElementById('main-nav');
+    const mainHeader = document.getElementById('main-header');
+    const container = document.querySelector('.container');
+    
+    if (landingPage) {
+        landingPage.classList.remove('active');
+    }
+    
+    if (pageName === 'landing') {
+        if (landingPage) landingPage.classList.add('active');
+        if (mainNav) mainNav.style.display = 'none';
+        if (mainHeader) mainHeader.style.display = 'none';
+        if (container) container.style.background = 'linear-gradient(180deg, #f3f2ef 0%, #ffffff 100%)';
+        document.querySelectorAll('.page').forEach(page => {
+            if (page.id !== 'landing-page') {
+                page.classList.remove('active');
+            }
+        });
+        return;
+    }
+    
+    if (mainNav) {
+        mainNav.style.display = 'flex';
+    }
+    if (mainHeader) {
+        mainHeader.style.display = 'block';
+    }
+    if (container) {
+        container.style.background = '#f3f2ef';
+    }
+    
     document.querySelectorAll('.page').forEach(page => {
         page.classList.remove('active');
     });
+    
     document.getElementById(`${pageName}-page`).classList.add('active');
     
     // Update nav button active state
@@ -957,19 +986,19 @@ function showMessage(element, message, type) {
 }
 
 function determineInitialPage() {
-    const firstVisitFlag = localStorage.getItem('pto_firstVisit');
+    const hasSeenLanding = localStorage.getItem('pto_hasSeenLanding');
     const storedProfile = (localStorage.getItem('pto_myProfileText') || '').trim();
 
-    if (!firstVisitFlag) {
-        localStorage.setItem('pto_firstVisit', 'true');
-        return 'profile';
+    // Show landing page if user hasn't seen it yet
+    if (!hasSeenLanding) {
+        return 'landing';
     }
 
+    // Otherwise, show appropriate page based on profile status
     return storedProfile ? 'outreach' : 'profile';
 }
 
 function initializeApp() {
-    renderGlobalInstructions();
     getUUID();
 
     const goToOutreachBtn = document.getElementById('go-to-outreach-btn');
