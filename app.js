@@ -50,11 +50,11 @@ function showPage(pageName) {
     const mainNav = document.getElementById('main-nav');
     const mainHeader = document.getElementById('main-header');
     const container = document.querySelector('.container');
-    
+
     if (landingPage) {
         landingPage.classList.remove('active');
     }
-    
+
     if (pageName === 'landing') {
         if (landingPage) landingPage.classList.add('active');
         if (mainNav) mainNav.style.display = 'none';
@@ -67,7 +67,7 @@ function showPage(pageName) {
         });
         return;
     }
-    
+
     if (mainNav) {
         mainNav.style.display = 'flex';
     }
@@ -77,20 +77,25 @@ function showPage(pageName) {
     if (container) {
         container.style.background = '#f3f2ef';
     }
-    
+
     document.querySelectorAll('.page').forEach(page => {
         page.classList.remove('active');
     });
-    
+
     document.getElementById(`${pageName}-page`).classList.add('active');
-    
+
     // Update nav button active state
     document.querySelectorAll('.nav-btn').forEach(btn => {
         btn.classList.remove('active');
     });
     const navBtn = document.querySelector(`.nav-btn[data-page="${pageName}"]`);
     if (navBtn) navBtn.classList.add('active');
-    
+
+    // Reinitialize icons after page change
+    if (typeof lucide !== 'undefined') {
+        setTimeout(() => lucide.createIcons(), 50);
+    }
+
     if (pageName === 'history') {
         loadHistory();
     } else if (pageName === 'profile') {
@@ -884,6 +889,11 @@ async function loadHistory() {
                 `;
                 historyList.appendChild(itemDiv);
             });
+
+            // Reinitialize icons after loading history
+            if (typeof lucide !== 'undefined') {
+                setTimeout(() => lucide.createIcons(), 50);
+            }
         } else {
             historyList.innerHTML = '<p>No saved messages yet.</p>';
         }
@@ -972,6 +982,11 @@ async function viewHistoryEntry(historyId) {
                     item.appendChild(detailDiv);
                 }
             });
+
+            // Reinitialize icons for the new content
+            if (typeof lucide !== 'undefined') {
+                setTimeout(() => lucide.createIcons(), 50);
+            }
         }
     } catch (error) {
         alert(`Error loading entry: ${error.message}`);
@@ -1027,8 +1042,30 @@ document.addEventListener('DOMContentLoaded', () => {
             element.addEventListener('input', updateCharCounts);
         }
     });
-    
+
     // Initialize app flow (handles first visit, profile check, etc.)
     initializeApp();
+
+    // Initialize Lucide icons
+    if (typeof lucide !== 'undefined') {
+        lucide.createIcons();
+    }
+
+    // Add scroll effect to header
+    let lastScroll = 0;
+    window.addEventListener('scroll', () => {
+        const header = document.getElementById('main-header');
+        if (!header) return;
+
+        const currentScroll = window.pageYOffset;
+
+        if (currentScroll > 10) {
+            header.classList.add('scrolled');
+        } else {
+            header.classList.remove('scrolled');
+        }
+
+        lastScroll = currentScroll;
+    });
 });
 
